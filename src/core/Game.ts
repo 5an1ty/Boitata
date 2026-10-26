@@ -7,6 +7,7 @@ import { PlayerController } from '../player/PlayerController';
 import { GraphicsSettings } from '../systems/GraphicsSettings';
 import { MainMenu } from '../ui/MainMenu';
 import { MobileControls } from '../ui/MobileControls';
+import { ChapterOne } from '../story/ChapterOne';
 import { AudioManager } from '../audio/AudioManager';
 export class Game {
   private readonly audio=new AudioManager();
@@ -17,6 +18,7 @@ export class Game {
   private readonly player: PlayerController;
   private readonly graphics: GraphicsSettings;
   private readonly menu: MainMenu;
+  private readonly chapter:ChapterOne;
   private readonly mobile: MobileControls;
   private readonly loop: GameLoop;
   private readonly hud=document.createElement('div');
@@ -31,18 +33,25 @@ export class Game {
     this.graphics=new GraphicsSettings(this.renderer);this.graphics.resize();
     this.input=new InputManager(this.renderer.domElement);
     this.player=new PlayerController(new CameraController(this.world.camera),this.world.collisions);
-    this.hud.className='hud';this.hud.innerHTML='<div class="hud-top"><span>BR-319 <small>AMAZONAS · 2004</small></span><span class="live">● RAIMUNDO PINHEIRO</span></div><span class="crosshair">+</span><div class="hud-bottom"><span>02 <small>EXPLORAÇÃO</small></span><span class="lamp-status"></span></div>';
+    this.hud.className='hud';this.hud.innerHTML='<div class="hud-top"><span>BR-319 <small>AMAZONAS · 2004</small></span><span class="live">● RAIMUNDO PINHEIRO</span></div><span class="crosshair">+</span><div class="hud-bottom"><span>03 <small>EXPLORAÇÃO</small></span><span class="lamp-status"></span></div>';
     root.append(this.hud);this.toast.className='toast';this.toast.setAttribute('role','status');root.append(this.toast);this.prompt.className='interaction-prompt';root.append(this.prompt);
     this.mobile=new MobileControls(root,this.input);
+    this.chapter=new ChapterOne(this.world.environment,root,this.graphics,text=>this.message(text));
+    this.chapter.onFlashlight=()=>{this.world.flashlight.visible=!this.world.flashlight.visible;this.updateLamp();};
+    this.chapter.onClose=()=>{this.input.reset();if(!this.paused&&!this.isTouch()&&!this.chapter.dialogue.active)this.lockPointer();};
     this.menu=new MainMenu(root,this.graphics,()=>this.resume());
+    this.menu.hasSave=this.chapter.saves.load()!==null;this.menu.typewriter=this.chapter.typewriter;
+    this.menu.onTypewriter=enabled=>{this.chapter.dialogue.typewriter=enabled;this.chapter.persist();};
+    this.menu.onNewGame=()=>{if(this.chapter.saves.clear())location.reload();else this.message('Não foi possível remover o save.');};this.menu.refresh();
     const rotate=document.createElement('div');rotate.className='rotate-screen';rotate.innerHTML='<span>↻</span><h2>Gire o aparelho</h2><p>A floresta espera.<br>Jogue com o celular na horizontal.</p>';root.append(rotate);
     this.input.onAction=action=>{
-      if(action==='pause'){if(this.started){if(this.paused)this.resume();else this.pause();}return;}
+      if(action==='pause'){if(this.chapter.ui.modal!==null&&!this.paused){this.chapter.ui.close();return;}if(this.started){if(this.paused)this.resume();else this.pause();}return;}
       if(this.paused)return;
-      if(action==='flashlight'){this.world.flashlight.visible=!this.world.flashlight.visible;this.updateLamp();}
-      if(action==='interact'){this.world.camera.getWorldDirection(this.direction);const item=this.world.environment.findInteraction(this.player.position,this.direction);this.message(item?item.use(this.player.position):'Nada ao alcance. Aproxime-se e olhe para uma porta, placa ou documento.');}
+      if(action==='inventory'){this.chapter.openInventory();return;}
+      if(action==='flashlight'&&!this.chapter.blocking)this.chapter.onFlashlight();
+      if(action==='interact')this.chapter.interact();
     };
-    document.addEventListener('pointerlockchange',()=>{if(this.started&&!this.paused&&!document.pointerLockElement&&!this.isTouch())this.pause();});
+    document.addEventListener('pointerlockchange',()=>{if(this.started&&!this.paused&&!this.chapter.blocking&&!document.pointerLockElement&&!this.isTouch())this.pause();});
     this.renderer.domElement.addEventListener('click',()=>{if(!this.paused&&!this.isTouch())this.lockPointer();});
     window.addEventListener('blur',()=>this.pause());
     document.addEventListener('visibilitychange',()=>{if(document.hidden)this.pause();});
@@ -51,10 +60,14 @@ export class Game {
     this.loop=new GameLoop((dt,rawDt)=>{
       if(!this.paused){
         this.world.environment.update(dt,this.player.position,this.graphics.renderDistance);
-        this.lastPosition.copy(this.player.position);this.player.update(this.input,dt);
+        this.lastPosition.copy(this.player.position);
+        if(!this.chapter.blocking)this.player.update(this.input,dt);else this.input.reset();
+        this.world.camera.getWorldDirection(this.direction);this.chapter.update(dt,this.player.position,this.direction);
+        if(this.chapter.ui.modal!==null&&document.pointerLockElement)document.exitPointerLock();
+        this.mobile.show(!this.chapter.blocking);
         this.audio.update(this.player.position.x,this.player.position.z,this.lastPosition.distanceToSquared(this.player.position)>.000001);
         this.graphics.sample(rawDt);this.world.camera.getWorldDirection(this.direction);
-        const item=this.world.environment.findInteraction(this.player.position,this.direction);this.prompt.textContent=item?`E · ${item.label}`:'';
+        this.prompt.textContent=this.chapter.prompt;
       }
       if(this.world.camera.far!==this.graphics.renderDistance){this.world.camera.far=this.graphics.renderDistance;this.world.camera.updateProjectionMatrix();}
       this.renderer.render(this.world.scene,this.world.camera);
@@ -70,12 +83,12 @@ export class Game {
   }
   private resume(): void {
     if(this.isTouch()&&innerHeight>innerWidth)return;
-    this.audio.resume();this.started=true;this.paused=false;this.input.reset();this.input.enabled=true;this.menu.hide();this.mobile.show(true);this.hud.hidden=false;this.root.classList.add('playing');
+    this.audio.resume();this.chapter.start();this.started=true;this.paused=false;this.input.reset();this.input.enabled=true;this.menu.hide();this.mobile.show(true);this.hud.hidden=false;this.root.classList.add('playing');
     if(!this.isTouch())this.lockPointer();
   }
   private pause(): void {
     if(!this.started||this.paused)return;
-    this.audio.pause();this.paused=true;this.input.enabled=false;this.input.reset();this.mobile.show(false);this.hud.hidden=true;this.prompt.textContent='';this.menu.show(true);this.root.classList.remove('playing');
+    this.chapter.pause();this.audio.pause();this.paused=true;this.input.enabled=false;this.input.reset();this.mobile.show(false);this.hud.hidden=true;this.prompt.textContent='';this.menu.hasSave=this.chapter.saves.load()!==null;this.menu.show(true);this.root.classList.remove('playing');
     if(document.pointerLockElement)document.exitPointerLock();
   }
   private updateLamp(): void {this.hud.querySelector('.lamp-status')!.textContent=`F · LANTERNA ${this.world.flashlight.visible?'LIGADA':'DESLIGADA'}`;}

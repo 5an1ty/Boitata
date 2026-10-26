@@ -1,4 +1,4 @@
-export type Action = 'interact' | 'flashlight' | 'pause';
+export type Action = 'interact' | 'flashlight' | 'pause' | 'inventory';
 export class InputManager {
   readonly keys = new Set<string>();
   moveX = 0; moveY = 0; lookX = 0; lookY = 0; running = false;
@@ -6,11 +6,12 @@ export class InputManager {
   onAction: (action: Action) => void = () => {};
   constructor(readonly canvas: HTMLCanvasElement) {
     window.addEventListener('keydown', e => {
-      if (['KeyW','KeyA','KeyS','KeyD','ShiftLeft','ShiftRight','KeyE','KeyF','Escape'].includes(e.code)) {
+      if (['KeyW','KeyA','KeyS','KeyD','ShiftLeft','ShiftRight','KeyE','KeyF','KeyI','Escape'].includes(e.code)) {
         e.preventDefault();
         if (!e.repeat) {
           if (e.code === 'Escape') this.onAction('pause');
           if (this.enabled && e.code === 'KeyE') this.onAction('interact');
+          if (this.enabled && e.code === 'KeyI') this.onAction('inventory');
           if (this.enabled && e.code === 'KeyF') this.onAction('flashlight');
         }
         this.keys.add(e.code);

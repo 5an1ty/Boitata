@@ -13,6 +13,9 @@ export class GameWorld {
   readonly group=new Group();
   readonly signPosition=new Vector3(-7,1.5,11);
   readonly interactions:WorldInteraction[];
+  powerTarget=1;
+  powerLevel=1;
+  blackoutTime=-1;
   private time=0;
   private readonly beacon=new PointLight(0x72996b,7,16,2);
   constructor(private readonly scene:Scene,collisions:CollisionSystem){
@@ -47,9 +50,12 @@ export class GameWorld {
   }
   update(dt:number,player:Vector3,distance:number):void {
     this.time+=dt;this.forest.update(player,distance);this.atmosphere.update(dt,player,this.time);
+    this.powerLevel += Math.sign(this.powerTarget-this.powerLevel)*Math.min(Math.abs(this.powerTarget-this.powerLevel),dt*.18);
+    if(this.blackoutTime>=0)this.blackoutTime+=dt;
     this.station.lights[0].intensity=32+Math.sin(this.time*7)*1.5;
     this.station.lights[1].intensity=Math.sin(this.time*2.7)>.96?4:27+Math.sin(this.time*3)*1.5;
     this.beacon.intensity=5+Math.sin(this.time*.8)*2;
+    this.station.lights.forEach((light,i)=>{const blackout=this.blackoutTime<0?1:Math.max(0,1-Math.max(0,this.blackoutTime-i*1.4)/2);light.intensity*=this.powerLevel*blackout;});
   }
   dispose():void {
     this.forest.dispose();this.atmosphere.dispose();this.station.doors.forEach(d=>d.dispose());
