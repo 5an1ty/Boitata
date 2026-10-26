@@ -1,6 +1,6 @@
 # BOITATÁ: A Última Luz da BR-319
 
-**Etapa 3/6 — História e gameplay.** Protagonista: **Raimundo Pinheiro**. Noite chuvosa de 2004 em um trecho **fictício** da BR-319 ao sul de Manaus. Não é uma reprodução geográfica. Capítulo 1 jogável; sem campanha completa ou IA do Boitatá.
+**Etapa 4/6 — Boitatá e inteligência artificial.** Protagonista: **Raimundo Pinheiro**. Noite chuvosa de 2004 em um trecho **fictício** da BR-319 ao sul de Manaus. Não é uma reprodução geográfica. Capítulo 1 preservado, com encontros interativos da guardiã após seu final; sem campanha completa do Capítulo 2.
 
 ## Executar
 
@@ -37,7 +37,7 @@ As falas em português estão em `src/data/chapter1.ts`, separadas da lógica. H
 9. A iluminação retorna gradualmente. Aguarde estabilizar para concluir a restauração da energia.
 10. Volte ao terminal **CFTV**, à esquerda do caixa, e assista à gravação por pelo menos sete segundos. A sequência visual roteirizada mostra uma grande forma luminosa atravessando a mata. Encerre a gravação e acompanhe a transmissão final.
 
-O posto apaga progressivamente. Surge **“Investigue a origem da interferência.”** O save prepara o Capítulo 2; sua campanha e a criatura não estão implementadas.
+O posto apaga progressivamente. Surge **“Investigue a origem da interferência.”** O save prepara o Capítulo 2. A Etapa 4 libera aparições e encontros com o Boitatá na floresta após esse final, sem acrescentar a campanha completa do Capítulo 2.
 
 Rádio, telefone, TV, documentos, gaveta, portas, gerador e itens têm comportamentos reais. A fita cassete oferece uma **transcrição textual**, não uma gravação de voz inexistente. Outros documentos e fotografias podem ser examinados pelo inventário. A lanterna também pode ser acionada nele.
 
@@ -98,6 +98,7 @@ Com o servidor Vite em execução em outro terminal:
 ```sh
 npm run test:browser
 npm run test:chapter
+npm run test:creature
 ```
 
 Requer Chromium instalado. Caminho padrão `/usr/bin/chromium`; defina `CHROMIUM_PATH` para outro executável e `GAME_URL` para outro servidor. O teste usa `playwright-core`, sem baixar navegadores automaticamente.
@@ -132,3 +133,53 @@ Novos módulos da Etapa 2:
 - `tests/chapter.mjs`: capítulo do início ao fim por raycasts e trajetos com colisões; coleta dos oito itens, erro/acerto do puzzle, dez objetivos, seis eventos, tempo mínimo da câmera, final, save/load, corrupção e inventário por toque.
 
 Os testes de navegador exigem Vite ativo. Os resultados de emulação Chromium não certificam Safari/iOS, Android físico nem 30 FPS em celulares intermediários.
+
+## Etapa 4 — A guardiã luminosa
+
+### Aparições e encontro
+
+Todas as aparições exigem a transmissão final e o apagão do Capítulo 1 (`flags.ending`). O Capítulo 1 mantém objetivos, itens e puzzle, sem perseguições durante a investigação.
+
+- **Luzes entre árvores:** entre na trilha, aproximadamente x=0, z=18–31. Pequenas escamas emissivas revelam parte da serpente por sete segundos, sem ataque.
+- **Travessia da BR-319:** após o capítulo, observe a rodovia no trecho x < -7, z=16–36. A serpente atravessa à distância por uma rota navegável, sem perseguição nessa aparição. É possível vê-la antes ou depois da trilha.
+- **Clareira:** aproxime-se da instalação de comunicação, em torno de x=18, z=42. Um checkpoint é registrado na entrada da trilha e começa um encontro de observação. Apague a lanterna, evite correr e use as rochas/troncos caídos como cobertura.
+
+Os três eventos são únicos por partida, persistidos em `boitata-creature-v1` (versão 1). Aparições usam emergência/desvanecimento sobrenatural intencional. A locomoção visível usa deltaTime, caminhos com colisões e histórico real da cabeça, sem teletransporte para perseguir. Encontros posteriores podem ocorrer na clareira após o recuo e o intervalo de segurança; não repetem os avisos das três aparições.
+
+### Modelo, percepção e navegação
+
+Serpente low-poly com **28 segmentos**, cabeça com mandíbula e crista de fogo, olhos luminosos, escamas dorsais, cauda afilada e oscilação procedural. Segmentos amostram uma curva Catmull–Rom centrípeta pelo histórico da cabeça. Geometrias/materiais são compartilhados; corpo e escamas usam instâncias. **Uma única luz** representa a criatura, sem sombras dinâmicas. A pose inicial é preparada com uma trilha navegável e surge gradualmente.
+
+A percepção considera distância, FOV de 110°, linha de visão contra os sólidos existentes, lanterna, movimento/corrida e estado narrativo. Mesmo o estímulo de ruído exige linha de visão, evitando detecção através de paredes neste modelo simplificado. Corrida alcança até 15 m; passos normais, 5 m. A luz aumenta o alcance visual para 20 m, ou 28 m quando apontada diretamente. Apontar requer alinhamento superior a 0,94 com a direção da criatura.
+
+A navegação usa A* local limitado, oito vizinhos, sem cortar cantos em diagonal, simplificação apenas de trechos livres e deslocamento com varredura em subpassos. Replaneja a cada 0,7 s (0,8 s nas aparições); valida cada deslocamento diante de obstáculos atualizados. A margem da cabeça é de 1,1 m. Não há navegação pelo interior do posto: o jogador pode recuar para a área anterior à floresta, z < 17.
+
+| Estado | Condições e saída |
+| --- | --- |
+| DORMANT | Oculto e sem atualizar o modelo; ativa nos encontros permitidos pela narrativa. |
+| PATROL | Percorre waypoints da clareira; visão leva a STALK, ruído a INVESTIGATE. |
+| INVESTIGATE | Vai à última posição ouvida; visão leva a STALK, sete segundos sem resolução levam a SEARCH. |
+| STALK | Observa e se orienta para o jogador. Lanterna direta aumenta suspeita a 0,8/s; luz ligada a 0,2/s. Desligada, a suspeita reduz, salvo proximidade extrema. Há no mínimo três segundos antes de CHASE. Perda de visão por três segundos leva a SEARCH; discrição prolongada provoca RETREAT. |
+| CHASE | Acelera de 2,2 até 3,9 m/s, abaixo dos 5,2 m/s de corrida do jogador. Só atualiza a última posição conhecida com visão válida. Perda de contato por 1,2 s leva a SEARCH; perseguição limitada a 18 s. |
+| SEARCH | Vai à última posição conhecida e varre o olhar ao chegar; reencontro leva a STALK, sete segundos sem contato levam a RETREAT. |
+| RETREAT | Recua por caminhos, desvanece e volta a DORMANT em seis segundos, com intervalo de segurança. |
+
+A lanterna direta provoca brilho crescente, aviso visual e intensificação do som grave. Durante a perseguição há um pulso musical sintetizado, oscilação luminosa e tremor sutil da câmera. As novas coberturas possuem colisão e permitem contornar pelos lados. O abrigo do posto e a trilha de retorno oferecem fuga; o jogador não precisa vencer uma corrida contra uma criatura mais rápida que ele.
+
+### Captura e checkpoint
+
+Captura exige distância inferior a 1,15 m **e visão válida**. A tela recebe luz alaranjada, o som sintetizado é distorcido, a câmera treme e a imagem escurece. Após 3,3 segundos, Raimundo volta ao checkpoint da trilha (ou à chegada no laboratório), com lanterna apagada e 20 segundos de segurança. Inventário, itens e os dez objetivos do Capítulo 1 ficam intactos. Pausar congela captura, movimento e áudio.
+
+O checkpoint da floresta e os eventos ficam em um save separado e validado; não migram nem substituem o save do Capítulo 1. Continuar após registrar o checkpoint restaura Raimundo na trilha. **Nova partida** limpa ambos os saves após a confirmação existente.
+
+### Áudio e teste de desenvolvimento
+
+`audio/CreatureAudio.ts` sintetiza aproximação grave, ruído filtrado de movimento/estalos e um pulso harmônico de perseguição. Um `PannerNode` HRTF acompanha a criatura, com atenuação por distância e listener atualizado pela câmera; a captura usa um `WaveShaperNode`. Não são gravações fornecidas ou dublagem. O contexto é desbloqueado ao iniciar/continuar, suspenso na pausa/dormência e fechado no descarte.
+
+Com `npm run dev`, acrescente **`?aiDebug`** ao endereço aberto no seu navegador. Expanda **IA · DESENVOLVIMENTO**, escolha **Laboratório · Ir à clareira** e avance as legendas iniciais se necessário. Os botões forçam os sete estados e mostram estado, suspeita, visão e distância. O laboratório ignora apenas o bloqueio narrativo da criatura; não conclui objetivos nem grava aparições/checkpoints. Ele não aparece no build de produção.
+
+`npm run test:creature` valida os sete estados, campo/linha de visão, lanterna apagada, ruído, barreiras, perda de contato, busca/recuo, A*, deslocamentos sem teletransporte, captura, três aparições, persistência/restauração do checkpoint e renderização em resolução mobile. As regressões do capítulo e dos controles continuam nos outros dois comandos.
+
+Amostra automatizada de 35 frames a 422×195 com criatura e cenário: aproximadamente 76 chamadas e 20 mil triângulos na visão selecionada. Tempos impressos pelo teste são do Chromium/SwiftShader deste ambiente. **30 FPS em Android/iOS reais ainda não estão certificados.**
+
+Novos arquivos: `creature/BoitataModel.ts`, `BoitataAI.ts`, `Navigation.ts`, `CreatureEncounter.ts`, `CheckpointManager.ts`, `audio/CreatureAudio.ts`, `vite-env.d.ts` e `tests/creature.mjs`.

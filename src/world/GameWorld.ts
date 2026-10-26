@@ -13,6 +13,7 @@ export class GameWorld {
   readonly group=new Group();
   readonly signPosition=new Vector3(-7,1.5,11);
   readonly interactions:WorldInteraction[];
+  creatureThreat=0;
   powerTarget=1;
   powerLevel=1;
   blackoutTime=-1;
@@ -54,7 +55,7 @@ export class GameWorld {
     if(this.blackoutTime>=0)this.blackoutTime+=dt;
     this.station.lights[0].intensity=32+Math.sin(this.time*7)*1.5;
     this.station.lights[1].intensity=Math.sin(this.time*2.7)>.96?4:27+Math.sin(this.time*3)*1.5;
-    this.beacon.intensity=5+Math.sin(this.time*.8)*2;
+    this.beacon.intensity=(5+Math.sin(this.time*.8)*2)*(1+this.creatureThreat*Math.sin(this.time*12)*.4);
     this.station.lights.forEach((light,i)=>{const blackout=this.blackoutTime<0?1:Math.max(0,1-Math.max(0,this.blackoutTime-i*1.4)/2);light.intensity*=this.powerLevel*blackout;});
   }
   dispose():void {

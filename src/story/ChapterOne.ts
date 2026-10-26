@@ -20,9 +20,10 @@ export class ChapterOne {
  readonly sounds=new StorySounds();private readonly effects:StoryEffects;private readonly pickups=new Map<ItemId,{mesh:Mesh;object:ChapterObject}>();
  private readonly objects:ChapterObject[]=[];private progress:number[]=[];private cameraTime=0;private chapter:1|2=1;private started=false;
  private position=new Vector3();private direction=new Vector3(0,0,-1);private generatorPosition=new Vector3(25,1.4,-16.4);
+ externalBlock=false;
  onClose:()=>void=()=>{};onFlashlight:()=>void=()=>{};
  constructor(private readonly world:GameWorld,root:HTMLElement,private readonly graphics:GraphicsSettings,private readonly notify:(message:string)=>void){
-  this.ui=new ChapterUI(root);this.ui.visible(false);this.ui.onClose=()=>this.onClose();this.ui.onInventory=()=>{if(!this.dialogue.active&&this.ui.modal===null)this.openInventory();};this.ui.advance.onclick=()=>this.dialogue.advance();
+  this.ui=new ChapterUI(root);this.ui.visible(false);this.ui.onClose=()=>this.onClose();this.ui.onInventory=()=>{if(!this.externalBlock&&!this.dialogue.active&&this.ui.modal===null)this.openInventory();};this.ui.advance.onclick=()=>this.dialogue.advance();
   this.dialogue.onLine=line=>{if(/interferência|estática/i.test(line.text))this.sounds.tone('static');};
   this.interaction=new InteractionSystem(world.assets.collisions);this.effects=new StoryEffects(world);
   world.powerTarget=.2;world.powerLevel=.2;this.restore();
@@ -64,7 +65,7 @@ export class ChapterOne {
   if(this.puzzles.has('generator'))world.powerTarget=1;
   if(this.horror.executed.has('blackout')){world.powerTarget=0;world.blackoutTime=10;}
  }
- get blocking():boolean{return this.dialogue.active||this.ui.modal!==null;}
+ get blocking():boolean{return this.externalBlock||this.dialogue.active||this.ui.modal!==null;}
  get typewriter():boolean{return this.dialogue.typewriter;}
  start():void {
   this.sounds.unlock();this.dialogue.resume();this.ui.visible(true);if(this.started)return;this.started=true;
@@ -89,11 +90,12 @@ export class ChapterOne {
   if(this.ui.modal==='camera'){this.cameraTime+=dt;if(this.cameraTime>=7)this.ui.cameraReady();}
  }
  interact():void {
+  if(this.externalBlock)return;
   if(this.dialogue.active){this.dialogue.advance();return;}if(this.ui.modal!==null)return;
   const item=this.interaction.find(this.position,this.direction);this.notify(item?item.use(this.position):'Nada ao alcance. Olhe diretamente para o objeto.');
  }
  get prompt():string {if(this.blocking)return '';const item=this.interaction.find(this.position,this.direction);return item?`[E] INTERAGIR · ${item.label}`:'';}
- openInventory():void {if(this.dialogue.active)return;if(this.ui.modal==='inventory'){this.ui.close();return;}if(this.ui.modal)return;this.ui.inventory(this.inventory,id=>this.useItem(id));}
+ openInventory():void {if(this.externalBlock)return;if(this.dialogue.active)return;if(this.ui.modal==='inventory'){this.ui.close();return;}if(this.ui.modal)return;this.ui.inventory(this.inventory,id=>this.useItem(id));}
  private useItem(id:ItemId):string {
   if(id==='flashlight'){this.onFlashlight();return 'Estado da lanterna alternado.';}
   if(id==='radio'){this.ui.close();return this.radio();}
@@ -122,7 +124,7 @@ export class ChapterOne {
  }
  private ending():void {this.dialogue.play(ENDING,()=>{
   this.horror.trigger('blackout',()=>{this.world.powerTarget=0;this.world.blackoutTime=0;this.sounds.tone('electricity');});
-  this.flags.add('ending');this.chapter=2;this.persist();this.notify('Capítulo 1 concluído. Investigue a origem da interferência. Capítulo 2 preparado; criatura não implementada.');
+  this.flags.add('ending');this.chapter=2;this.persist();this.notify('Capítulo 1 concluído. Investigue a origem da interferência. Siga a trilha com cuidado: a guardiã da floresta está desperta.');
  });}
  persist():void {
   const data:ChapterSave={version:1,chapter:this.chapter,objectives:this.objectives.completed,items:Object.fromEntries(this.inventory.items),unlocked:[...this.unlocked],puzzles:[...this.puzzles],events:[...this.horror.executed],flags:[...this.flags],settings:{quality:this.graphics.quality,distance:this.graphics.renderDistance,adaptive:this.graphics.adaptive,typewriter:this.dialogue.typewriter}};

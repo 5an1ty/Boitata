@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test:browser": "node tests/world.mjs",
-    "test:chapter": "node tests/chapter.mjs"
+    "test:chapter": "node tests/chapter.mjs",
+    "test:creature": "node tests/creature.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"

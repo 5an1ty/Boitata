@@ -6,6 +6,7 @@ export class PlayerController {
   readonly position = new Vector3(5, 1.65, 15);
   private verticalSpeed = 0;
   constructor(private readonly view: CameraController, private readonly collisions: CollisionSystem) { view.camera.position.copy(this.position); }
+  resetAt(position:Vector3):void {this.position.copy(position);this.verticalSpeed=0;this.view.camera.position.copy(position);this.view.yaw=Math.PI;this.view.pitch=0;this.view.camera.rotation.set(0,Math.PI,0);}
   update(input: InputManager, dt: number): void {
     this.view.update(input);
     let x = Number(input.keys.has('KeyD')) - Number(input.keys.has('KeyA')) + input.moveX;
