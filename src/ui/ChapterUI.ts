@@ -1,7 +1,7 @@
 import {ITEMS,type ItemId} from '../data/chapter1';
 import type {Inventory} from '../story/Inventory';
 import type {DialogueManager} from '../story/DialogueManager';
-export type Modal='inventory'|'generator'|'camera'|null;
+export type Modal='inventory'|'generator'|'camera'|'campaign'|null;
 export class ChapterUI {
  readonly overlay=document.createElement('section');
  readonly subtitles=document.createElement('section');
@@ -20,6 +20,7 @@ export class ChapterUI {
   this.overlay.replaceChildren();const panel=document.createElement('div');panel.className='chapter-panel';const h=document.createElement('h2');h.textContent=title;panel.append(h);this.overlay.append(panel);this.overlay.hidden=false;return panel;
  }
  private button(panel:HTMLElement,text:string,action:()=>void):HTMLButtonElement {const b=document.createElement('button');b.textContent=text;b.onclick=action;panel.append(b);return b;}
+ campaign(title:string,render:(panel:HTMLElement)=>void):void {this.modal='campaign';render(this.panel(title));}
  close():void {this.overlay.hidden=true;this.modal=null;this.onClose();}
  inventory(inventory:Inventory,use:(id:ItemId)=>string):void {
   this.modal='inventory';const panel=this.panel('INVENTÁRIO · RAIMUNDO PINHEIRO');const description=document.createElement('p');description.className='item-description';description.textContent='Selecione um item para examinar ou usar.';

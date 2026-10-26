@@ -22,6 +22,7 @@ export function validateSave(value:unknown):value is ChapterSave {
  if(flags.includes('fuseInstalled')&&items.fuse!=='used')return false;
  if((v.unlocked as string[]).includes('DEPÓSITO')&&items.key!=='used')return false;
  if(items.key&&!flags.includes('drawer'))return false;
+ if(flags.includes('ending')&&facts.length!==OBJECTIVES.length)return false;
  if(v.chapter===2&&facts.length!==OBJECTIVES.length)return false;
  if(v.chapter===2&&(!flags.includes('ending')||!facts.includes('camera')||!events.includes('blackout')))return false;
  return true;

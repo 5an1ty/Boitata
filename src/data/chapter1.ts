@@ -1,3 +1,4 @@
+import {CAMPAIGN_ITEMS} from './campaign';
 export interface DialogueLine {speaker:string;text:string;duration:number;audio?:string;allowAdvance?:boolean;}
 export const INTRO:DialogueLine[]=[
  {speaker:'21 DE NOVEMBRO DE 2004 · 23H47',text:'Amazonas, BR-319. Raimundo Pinheiro, 24 anos, técnico de manutenção. Um chamado para consertar o sistema elétrico do Posto Última Parada.',duration:7},
@@ -14,6 +15,7 @@ export const ENDING:DialogueLine[]=[
 ];
 export const PUZZLE={id:'generator',sequence:[2,1,3] as readonly number[],clue:'ANOTAÇÃO ELÉTRICA — Antônio: encaixe o fusível no painel externo do gerador. Rearme os circuitos nesta ordem: 2 → 1 → 3. Se errar, solte tudo e comece novamente. A câmera só volta quando os três circuitos estabilizam.'};
 export const ITEMS={
+ ...CAMPAIGN_ITEMS,
  flashlight:{icon:'☼',name:'Lanterna',description:'Lanterna de manutenção. Use para alternar a luz. Se ela olhar para você, apague.'},
  radio:{icon:'▣',name:'Rádio portátil',description:'Rádio de Raimundo. Sintonizado no canal do posto.'},
  key:{icon:'⚿',name:'Chave do depósito',description:'Chave encontrada na gaveta do balcão. Use olhando para a porta do depósito.'},

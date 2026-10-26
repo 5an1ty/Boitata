@@ -9,7 +9,7 @@ export class ForestSectors {
   private readonly dummy=new Object3D();
   constructor(private readonly scene:Scene,private readonly assets:WorldAssets){}
   static clear(x:number,z:number):boolean {
-    return Math.abs(x+12)<6 || (x>-8&&x<31&&z>-30&&z<17) || (Math.abs(x)<2.5&&z>=15&&z<38) || (Math.abs(z-39)<2.5&&x>=-2&&x<18) || Math.hypot(x-18,z-42)<9;
+    return (x>25&&x<50&&z>29&&z<54)||(x>17&&x<30&&z>36&&z<42)||(x>-9&&x<4&&z>16&&z<20)||Math.abs(x+12)<6 || (x>-8&&x<31&&z>-30&&z<17) || (Math.abs(x)<2.5&&z>=15&&z<38) || (Math.abs(z-39)<2.5&&x>=-2&&x<18) || Math.hypot(x-18,z-42)<9;
   }
   update(position:Vector3,distance:number):void {
     const desired=new Set<string>();

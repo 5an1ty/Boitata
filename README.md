@@ -1,6 +1,6 @@
 # BOITATÁ: A Última Luz da BR-319
 
-**Etapa 4/6 — Boitatá e inteligência artificial.** Protagonista: **Raimundo Pinheiro**. Noite chuvosa de 2004 em um trecho **fictício** da BR-319 ao sul de Manaus. Não é uma reprodução geográfica. Capítulo 1 preservado, com encontros interativos da guardiã após seu final; sem campanha completa do Capítulo 2.
+**Etapa 5/6 — Campanha com quatro capítulos e três finais.** Protagonista: **Raimundo Pinheiro**. Noite chuvosa de 2004 em um trecho **fictício** da BR-319 ao sul de Manaus. Não é uma reprodução geográfica. Capítulo 1 preservado, investigação da instalação, retorno ao posto e três desfechos jogáveis.
 
 ## Executar
 
@@ -37,7 +37,7 @@ As falas em português estão em `src/data/chapter1.ts`, separadas da lógica. H
 9. A iluminação retorna gradualmente. Aguarde estabilizar para concluir a restauração da energia.
 10. Volte ao terminal **CFTV**, à esquerda do caixa, e assista à gravação por pelo menos sete segundos. A sequência visual roteirizada mostra uma grande forma luminosa atravessando a mata. Encerre a gravação e acompanhe a transmissão final.
 
-O posto apaga progressivamente. Surge **“Investigue a origem da interferência.”** O save prepara o Capítulo 2. A Etapa 4 libera aparições e encontros com o Boitatá na floresta após esse final, sem acrescentar a campanha completa do Capítulo 2.
+O posto apaga progressivamente. Surge **“Investigue a origem da interferência.”** A transmissão inicia o Capítulo 2. As aparições e encontros da guardiã acompanham o percurso até a instalação e o retorno ao posto.
 
 Rádio, telefone, TV, documentos, gaveta, portas, gerador e itens têm comportamentos reais. A fita cassete oferece uma **transcrição textual**, não uma gravação de voz inexistente. Outros documentos e fotografias podem ser examinados pelo inventário. A lanterna também pode ser acionada nele.
 
@@ -99,6 +99,7 @@ Com o servidor Vite em execução em outro terminal:
 npm run test:browser
 npm run test:chapter
 npm run test:creature
+npm run test:campaign
 ```
 
 Requer Chromium instalado. Caminho padrão `/usr/bin/chromium`; defina `CHROMIUM_PATH` para outro executável e `GAME_URL` para outro servidor. O teste usa `playwright-core`, sem baixar navegadores automaticamente.
@@ -170,7 +171,7 @@ A lanterna direta provoca brilho crescente, aviso visual e intensificação do s
 
 Captura exige distância inferior a 1,15 m **e visão válida**. A tela recebe luz alaranjada, o som sintetizado é distorcido, a câmera treme e a imagem escurece. Após 3,3 segundos, Raimundo volta ao checkpoint da trilha (ou à chegada no laboratório), com lanterna apagada e 20 segundos de segurança. Inventário, itens e os dez objetivos do Capítulo 1 ficam intactos. Pausar congela captura, movimento e áudio.
 
-O checkpoint da floresta e os eventos ficam em um save separado e validado; não migram nem substituem o save do Capítulo 1. Continuar após registrar o checkpoint restaura Raimundo na trilha. **Nova partida** limpa ambos os saves após a confirmação existente.
+O checkpoint da floresta e os eventos ficam em um save separado e validado; não migram nem substituem o save do Capítulo 1. Continuar após registrar o checkpoint restaura Raimundo na trilha. **Nova partida** limpa os saves do capítulo, criatura e campanha após a confirmação existente. A campanha tem precedência na posição de retorno quando possui um checkpoint mais recente.
 
 ### Áudio e teste de desenvolvimento
 
@@ -183,3 +184,61 @@ Com `npm run dev`, acrescente **`?aiDebug`** ao endereço aberto no seu navegado
 Amostra automatizada de 35 frames a 422×195 com criatura e cenário: aproximadamente 76 chamadas e 20 mil triângulos na visão selecionada. Tempos impressos pelo teste são do Chromium/SwiftShader deste ambiente. **30 FPS em Android/iOS reais ainda não estão certificados.**
 
 Novos arquivos: `creature/BoitataModel.ts`, `BoitataAI.ts`, `Navigation.ts`, `CreatureEncounter.ts`, `CheckpointManager.ts`, `audio/CreatureAudio.ts`, `vite-env.d.ts` e `tests/creature.mjs`.
+
+## Etapa 5 — Campanha e finais
+
+**Duração pretendida: 30–45 minutos numa primeira investigação, ainda não certificada por playtests humanos.** Não há espera artificial para estender a duração: deslocamentos, busca, leitura, puzzle, decisões e encontros compõem o tempo. Cutscenes curtas podem ser puladas. O teste automatizado conhece os locais, avança falas e não mede a experiência de uma primeira partida; não é evidência dessa duração.
+
+### Capítulo 2 — O som das árvores
+
+Após o apagão, o rádio indica a antena depois da curva. Saia, siga o acostamento à esquerda e examine o caminhão abandonado ao norte (próximo de x=-17, z=32). Seu rádio fica à direita da cabine, perto do para-brisa. Ele revela a função dos comboios e aponta a trilha atrás do posto. Volte pelo acostamento e pelo pátio, entre na trilha, apague a lanterna e passe pelas escamas luminosas. Siga até a instalação. A progressão exige examinar caminhão e rádio; estar apenas perto deles não completa esses objetivos.
+
+### Capítulo 3 — O guardião
+
+A instalação agora inclui três arquivos exploráveis a leste da antena, ligados por um corredor exterior. Examine a placa de entrada e recolha o manual. As provas seguem uma ordem documentada:
+
+1. Fotografia da queimada, sala oeste.
+2. Gravação, sala central (transcrição disponível no inventário).
+3. Registro de transporte, sala leste.
+
+Cada prova é um item real do inventário e persiste no save existente. Compare as três no terminal exterior: combustível e material de ignição saíam do posto para apoiar queimadas. O Boitatá protege a floresta; ele não é um caçador genérico.
+
+Na base da antena, configure o transmissor conforme o manual: **153.40 MHz, 12 V, chave REDE**. O indicador mostra os três circuitos corretos; verificar uma combinação errada preserva os componentes e permite tentar de novo. Após o rearme, apague a lanterna e use o lado protegido da cobertura do painel. O objetivo só completa quando a percepção da criatura não consegue ver Raimundo. Volte à antena e feche o acoplador. Uma transmissão identifica o bloqueador principal no posto.
+
+### Capítulo 4 — A última luz
+
+Retorne pela trilha. O relógio está em **00h13**. Uma travessia na rodovia e as falas de Raimundo reinterpretam os acontecimentos. O equipamento auxiliar fica na lateral externa direita do prédio, perto de x=23, z=-13.
+
+- Reative o equipamento e interaja novamente para carregar as três provas.
+- O checkpoint anterior à sequência final é salvo.
+- Desligue o relé da rodovia (x=-6, z=18), contorne o gabinete e desligue o da trilha (x=0,6, z=28).
+- A guardiã observa os caminhos. Apague a lanterna, use cobertura ou corra para quebrar contato. Volte para a área do posto e conclua no equipamento auxiliar.
+- Alternativamente, entre pelo lado direito do carro e confirme a fuga. A escolha é explícita; o jogo não transmite provas automaticamente.
+
+O sistema mantém objetivos em ordem. Na fuga, as tarefas de transmissão abandonadas **não** são marcadas falsamente como concluídas. Os capítulos 2–4 acrescentam vinte objetivos aos dez do Capítulo 1.
+
+### Três finais
+
+| Final | Condição real |
+| --- | --- |
+| O Amanhecer | Carregar fotografia, gravação e transporte; operar ambos os relés; escapar e confirmar a transmissão. A iluminação amanhece e a criatura recua. |
+| Estrada sem Fim | Escolher fugir no carro após retornar ao posto, sem concluir a transmissão. Câmera de direção, retorno sobrenatural ao posto e relógio em 23h47. |
+| A Testemunha | Completar a mesma transmissão com **todos os seis registros opcionais** no inventário. Dois pontos luminosos observam a partida. |
+
+Registros opcionais: fita cassete, registro de manutenção e fotografias do Capítulo 1; diário das cinzas atrás dos arquivos; livro de abastecimento na lateral do gerador; bilhete da testemunha no banheiro. Nenhum é destruído pela captura. É possível voltar para buscar os que faltam antes de transmitir.
+
+Os finais têm cutscenes procedurais leves: movimento de câmera, legendas, alterações de luz, animação de instrumentos/painel e transições em CSS. Não há arquivos de vídeo ou dublagem inventada. O painel final permite voltar ao menu ou repetir o trecho a partir do checkpoint, inclusive para tentar outro desfecho.
+
+### Saves, checkpoints e recuperação
+
+O save do Capítulo 1 permanece em `boitata-save-v1`, com o inventário ampliado de forma compatível. A criatura conserva `boitata-creature-v1`. A campanha usa `boitata-campaign-v1`, **versão 1**, com capítulo, objetivos ordenados, flags, resultado, checkpoint e tempo ativo.
+
+Checkpoints efetivos: gerador resolvido; entrada da floresta; chegada à instalação; três evidências recuperadas; equipamento preparado antes dos relés. O checkpoint do gerador é inferido do puzzle salvo e retorna ao exterior seguro do gerador. Os demais possuem posições fixas verificadas por colisão. Ao capturar durante a sequência final, os relés reiniciam; provas e investigação permanecem. Coletar opcionais não faz o checkpoint regredir.
+
+Carregar restaura inventário, progresso, disponibilidade das provas, objetivo, posição, equipamentos e estado visual dos finais. Saves malformados, capítulos fora de ordem e resultados inconsistentes são rejeitados; a investigação do Capítulo 1 é preservada. Se uma gravação parcial entre os dois saves perder uma prova obrigatória, a campanha retorna ao arquivo correspondente para permitir recolhê-la. Itens históricos já coletados podem recompor seus objetivos, sem exigir coletá-los duas vezes.
+
+### Verificações
+
+`npm run test:campaign` cobre Capítulos 2–4 por trajetos com colisões e raycasts, usando caminhada de 2,7 m/s na simulação; ordem dos objetivos, erros e acerto do transmissor, três provas persistentes, relés, três finais, recuperação do checkpoint, retorno ao menu e reload. Também carrega um final no viewport mobile e testa toque, menu, repetição, inventário e retorno ao joystick. `test:chapter` cobre o percurso completo do Capítulo 1; `test:creature` cobre perseguição/captura e estados; `test:browser` conserva as regressões de cenário e controles.
+
+Módulos novos: `campaign/ChapterManager.ts`, `CampaignManager.ts`, `CampaignSave.ts`, `CampaignWorld.ts`, `CutsceneManager.ts`, `data/campaign.ts` e `tests/campaign.mjs`. Todos os sistemas anteriores são reutilizados. A Etapa 6 não foi implementada. Duração e desempenho em celulares físicos continuam pendentes de playtest.

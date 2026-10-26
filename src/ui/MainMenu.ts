@@ -12,7 +12,7 @@ export class MainMenu {
   show(paused: boolean): void {this.paused=paused;this.page='main';this.element.hidden=false;this.render();}
   hide(): void {this.element.hidden=true;}
   private render(): void {
-    this.element.innerHTML=`<div class="menu-content"><div class="eyebrow">UM JOGO DE TERROR BRASILEIRO</div><h1>BOITATÁ<span>A ÚLTIMA LUZ DA BR-319</span></h1><div class="edition">${this.paused?'TRANSMISSÃO INTERROMPIDA · PAUSADO':'AMAZONAS, BRASIL · 2004'}</div><div class="menu-panel"></div><div class="menu-foot">RAIMUNDO PINHEIRO<span>ETAPA 04 / A GUARDIÃ</span></div></div><div class="coordinates">03° S &nbsp; 60° W<br>ALGUM LUGAR AO SUL DE MANAUS</div>`;
+    this.element.innerHTML=`<div class="menu-content"><div class="eyebrow">UM JOGO DE TERROR BRASILEIRO</div><h1>BOITATÁ<span>A ÚLTIMA LUZ DA BR-319</span></h1><div class="edition">${this.paused?'TRANSMISSÃO INTERROMPIDA · PAUSADO':'AMAZONAS, BRASIL · 2004'}</div><div class="menu-panel"></div><div class="menu-foot">RAIMUNDO PINHEIRO<span>ETAPA 05 / CAMPANHA</span></div></div><div class="coordinates">03° S &nbsp; 60° W<br>ALGUM LUGAR AO SUL DE MANAUS</div>`;
     const panel=this.element.querySelector<HTMLElement>('.menu-panel')!;
     const button=(text:string,callback:()=>void)=>{const b=document.createElement('button');b.textContent=text;b.addEventListener('click',callback);panel.append(b);return b;};
     if(this.page==='main') {
@@ -30,7 +30,7 @@ export class MainMenu {
       const typing=document.createElement('label');typing.className='checkbox';const check=document.createElement('input');check.type='checkbox';check.checked=this.typewriter;check.onchange=()=>{this.typewriter=check.checked;this.onTypewriter(check.checked);};typing.append(check,' Efeito de digitação');panel.append(typing);
       button('← Voltar',()=>{this.page='main';this.render();});
     } else {
-      const text=document.createElement('p');text.className='credits';text.textContent='BOITATÁ: A Última Luz da BR-319\nProtagonista: Raimundo Pinheiro\nCapítulo 1 e encontros com a guardiã · Etapa 4\nDesenvolvido com Three.js, TypeScript e Vite.\nCenário fictício inspirado na Amazônia brasileira.\nGeometria e texturas geradas no próprio jogo.';panel.append(text);button('← Voltar',()=>{this.page='main';this.render();});
+      const text=document.createElement('p');text.className='credits';text.textContent='BOITATÁ: A Última Luz da BR-319\nProtagonista: Raimundo Pinheiro\nQuatro capítulos e três finais · Etapa 5\nDesenvolvido com Three.js, TypeScript e Vite.\nCenário fictício inspirado na Amazônia brasileira.\nGeometria e texturas geradas no próprio jogo.';panel.append(text);button('← Voltar',()=>{this.page='main';this.render();});
     }
   }
 }

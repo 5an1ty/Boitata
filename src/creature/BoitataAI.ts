@@ -12,7 +12,7 @@ export class BoitataAI {
  private readonly patrol=[new Vector3(12,1.65,39),new Vector3(22,1.65,39),new Vector3(22,1.65,46),new Vector3(12,1.65,46)];
  constructor(private readonly collisions:CollisionSystem){this.navigation=new Navigation(collisions);}
  transition(state:AIState):void {if(state===this.state)return;const before=this.state;this.state=state;this.stateTime=0;this.planTime=0;this.path=[];if(state==='CHASE')this.chaseTime=0;this.onTransition(before,state);}
- activate(position:Vector3):void {if(this.state!=='DORMANT')return;this.position.copy(this.navigation.nearest(position));this.suspicion=0;this.transition('PATROL');}
+ activate(position:Vector3):void {if(this.state!=='DORMANT')return;this.position.copy(this.navigation.nearest(position));this.suspicion=0;this.lostTime=0;this.lastKnown.copy(this.position);this.transition('PATROL');}
  perceive(input:CreatureStimulus):Perception {
   const delta=input.position.clone().sub(this.position),distance=delta.length();delta.normalize();
   const beam=input.flashlight&&input.look.dot(delta.clone().negate())>.94&&distance<28;

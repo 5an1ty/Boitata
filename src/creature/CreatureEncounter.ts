@@ -11,7 +11,7 @@ export class CreatureEncounter {
  private readonly coverColliders:Box3[]=[];
  private readonly covers=new Group();private readonly coverGeometry=new BoxGeometry(1,1,1);private readonly coverMaterial=new MeshLambertMaterial({color:0x434f35,flatShading:true});
  onRespawn:(position:Vector3)=>void=()=>{};onCheckpoint:()=>void=()=>{};
- private devPanel?:HTMLElement;private debugOverride=false;
+ private devPanel?:HTMLElement;private debugOverride=false;private peaceful=false;
  constructor(private readonly world:GameWorld,root:HTMLElement,private readonly notify:(message:string)=>void){
   this.ai=new BoitataAI(world.assets.collisions);world.station.group.add(this.model.group,this.covers);
   this.overlay.className='capture-overlay';this.overlay.setAttribute('aria-live','assertive');this.overlay.hidden=true;root.append(this.overlay);
@@ -24,6 +24,12 @@ export class CreatureEncounter {
   this.ai.onCapture=()=>this.capture();
   if(import.meta.env.DEV&&new URLSearchParams(location.search).has('aiDebug'))this.createDebug(root);
  }
+ get apparitionActive():boolean{return this.appearance!==null;}
+ retreat():void {this.ai.transition('RETREAT');}
+ beginEncounter(position:Vector3):void {this.appearance=null;this.cooldown=0;this.ai.transition('DORMANT');this.ai.activate(position);this.seedBody(new Vector3(0,1.65,40));this.visibleTime=0;this.ai.transition('STALK');}
+ crossRoad():void {if(!this.blocking){this.ai.transition('DORMANT');this.startAppearance('road',new Vector3(-5,1.65,26));}}
+ setPeaceful(value:boolean):void {this.peaceful=value;if(value)this.retreat();}
+ resetEncounter():void {this.ai.transition('DORMANT');this.ai.suspicion=0;this.model.hide();this.appearance=null;this.cooldown=20;}
  get blocking():boolean{return this.captureTime>=0;}
  get shake():number{return this.blocking?.055:this.ai.state==='CHASE'?.008:0;}
  get threat():number{return this.ai.state==='CHASE'?1:this.ai.state==='STALK'?this.ai.suspicion:0;}
@@ -39,7 +45,7 @@ export class CreatureEncounter {
   if(this.blocking){this.captureTime+=dt;this.overlay.hidden=false;this.overlay.style.setProperty('--capture-time',String(this.captureTime));this.overlay.style.background=this.captureTime<1.2?`rgba(255,119,20,${Math.min(.9,this.captureTime*1.5)})`:`rgba(0,0,0,${Math.min(1,(this.captureTime-1.2)/1.2)})`;
    if(this.captureTime>3.3){this.captureTime=-1;this.overlay.hidden=true;this.ai.transition('DORMANT');this.ai.suspicion=0;this.cooldown=20;this.model.hide();this.audio.reset();this.audio.pause();this.onRespawn(this.checkpoint.position);this.notify('Raimundo desperta no último checkpoint. A lanterna foi apagada.');}return;
   }
-  if(!this.debugOverride&&!this.appearance&&this.ai.state==='DORMANT'&&this.cooldown<=0){
+  if(!this.peaceful&&!this.debugOverride&&!this.appearance&&this.ai.state==='DORMANT'&&this.cooldown<=0){
    if(!this.checkpoint.seen.has('embers')&&input.position.z>18&&input.position.z<31&&Math.abs(input.position.x)<5)this.startAppearance('embers',new Vector3(0,1.65,31));
    else if(!this.checkpoint.seen.has('road')&&input.position.x< -7&&input.position.z>16&&input.position.z<36)this.startAppearance('road',new Vector3(-5,1.65,26));
    else if(input.position.distanceTo(new Vector3(18,1.65,42))<10){
