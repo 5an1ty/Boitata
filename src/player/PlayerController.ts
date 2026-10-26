@@ -3,7 +3,7 @@ import type { InputManager } from '../input/InputManager';
 import type { CollisionSystem } from '../systems/CollisionSystem';
 import type { CameraController } from './CameraController';
 export class PlayerController {
-  readonly position = new Vector3(0, 1.65, 13);
+  readonly position = new Vector3(5, 1.65, 15);
   private verticalSpeed = 0;
   constructor(private readonly view: CameraController, private readonly collisions: CollisionSystem) { view.camera.position.copy(this.position); }
   update(input: InputManager, dt: number): void {

@@ -1,84 +1,87 @@
 # BOITATÁ: A Última Luz da BR-319
 
-Protótipo jogável da **Etapa 1/6**, com **Raimundo Pinheiro**. Amazonas, 2004. O abrigo é um cenário técnico temporário; a campanha e o posto completo ainda não estão implementados.
+**Etapa 2/6 — Ambientação e cenários.** Protagonista: **Raimundo Pinheiro**. Noite chuvosa de 2004 em um trecho **fictício** da BR-319 ao sul de Manaus. Não é uma reprodução geográfica. Sem campanha completa ou IA do Boitatá.
 
 ## Executar
 
-Requer Node.js 20.19+ ou 22.12+ (validado com Node 24).
+Node.js 20.19+ ou 22.12+ (validado com Node 24).
 
 ```sh
 npm install
 npm run dev
 ```
 
-Em ambientes com diretório pessoal sem permissão de escrita:
-
-```sh
-npm install --cache /workspace/.npm-cache
-```
-
-Para instalações posteriores, use `npm ci --cache /workspace/.npm-cache`.
+Se o diretório pessoal não permitir escrita, use `npm ci --cache /workspace/.npm-cache` (ou `npm install --cache /workspace/.npm-cache` para atualizar dependências).
 
 ```sh
 npm run build
 npm run preview
 ```
 
-O servidor de desenvolvimento aceita conexões da rede. Para abrir em um celular remoto, o endereço precisa estar acessível; HTTPS é recomendado para recursos do navegador. Não depende de APIs de orientação nem de recursos externos: a fonte VT323 e sua licença OFL estão em `public/fonts/`.
+## Exploração
 
-## Controles
+- O jogador começa diante do **POSTO ÚLTIMA PARADA**, com cobertura, pilares, duas bombas, luzes fluorescentes, poças, caminhão antigo e carro do protagonista.
+- Passe entre as bombas, aproxime-se da porta de vidro da conveniência, olhe para ela e pressione **E** para abrir. A loja tem balcão, caixa, produtos, prateleiras, geladeiras, TV de tubo, rádio, telefone, relógio e documentos legíveis.
+- No fundo da loja há quatro portas identificadas: banheiro, depósito, oficina e sala elétrica. Todos têm objetos próprios e espaço para circular. Portas abrem para dentro para manter o corredor livre.
+- Gerador e abrigo de ferramentas ficam no lado direito externo. O portão do pátio pode ser aberto e fechado.
+- A rodovia fica à esquerda, com acessos ao posto, acostamento, faixas gastas, lama, vegetação avançando e um caminhão abandonado ao norte.
+- Para a floresta, siga a placa da trilha atrás do ponto inicial. O caminho segue para o sul e vira à esquerda do caminhante (leste), até a clareira com retransmissora e luzes discretas. Não há missão ou transmissão funcional nesta etapa.
+
+## Controles preservados
 
 | Ação | Computador | Celular |
 | --- | --- | --- |
 | Mover | WASD | Joystick esquerdo |
 | Olhar | Mouse capturado após iniciar | Arrastar à direita |
 | Correr | Segurar Shift | Segurar CORRER |
-| Interagir | E, olhando para a placa a menos de 2,8 m | Botão E |
+| Interagir/portas | E, próximo e olhando para o objeto | Botão E |
 | Lanterna | F | Botão de luz |
 | Pausa | Esc | Botão superior direito |
 
-Aproxime-se da placa BR-319 à direita da estrada para ler. O abrigo permite entrar pela abertura frontal. Há limites no perímetro do cenário. A pausa congela a simulação e limpa entradas; perder foco ou sair da captura do mouse também pausa. O celular deve ficar na horizontal: a tela vertical exibe orientação e pausa o jogo.
+Movimento e câmera funcionam simultaneamente por Pointer Events independentes. Perda de foco, saída do pointer lock ou orientação vertical no celular pausam o jogo. Safe areas e bloqueio de scroll/gestos preservados. O celular deve estar na horizontal; não é necessário bloqueio automático de orientação.
 
-## Implementação
+## Renderização e desempenho
 
-- Three.js/WebGL, câmera em primeira pessoa, gravidade até o plano do chão e movimento por delta de tempo.
-- Colisões AABB, raio de jogador e deslocamento em pequenos passos para impedir atravessamento; deslizamento por eixo.
-- Joystick analógico e câmera com Pointer Events independentes, captura e cancelamento de ponteiros.
-- Neblina, iluminação noturna, lanterna funcional, texturas nearest, geometria low-poly, scanlines e fonte pixelada local.
-- Baixo/Médio/Alto usam 35%/50%/75% da resolução CSS; ajuste adaptativo entre 60% e 100% de cada nível conforme a taxa de quadros. Qualidade persistida quando localStorage está disponível.
-- Menus funcionais de início, pausa, configurações e créditos; interação real com uma placa.
-- Tratamento de falha de inicialização e perda de contexto WebGL; redimensionamento responsivo e safe areas.
+- Three.js/WebGL, low-poly, texturas nearest, fonte VT323 local (licença em `public/fonts/OFL.txt`), resolução interna reduzida e scanlines.
+- Qualidade Baixo/Médio/Alto: 35%/50%/75% da resolução CSS; adaptação entre 60% e 100% do nível. A medição adaptativa usa o tempo real do frame, enquanto a física limita delta a 50 ms.
+- Visibilidade configurável: 28, 48 ou 72 metros nas configurações.
+- Vegetação procedural determinística em setores de 20 m: árvores, palmeiras, raízes, cipós e arbustos em `InstancedMesh`, com escala, rotação e cores variáveis. Os corredores e clareira são reservados antes da geração.
+- Setores próximos são criados antes do deslocamento; os distantes removem colisores e buffers de instância. Geometrias e materiais compartilhados são preservados até o descarte do mundo.
+- Objetos estáticos do posto e estrada também são agrupados por material em instâncias. Portas continuam independentes.
+- Até quatro luzes pontuais e uma lanterna, sem sombras dinâmicas. Chuva em uma única chamada de desenho, suprimida sob coberturas. Poças usam manchas translúcidas com variação de brilho; não há reflexão de cena ou ray tracing.
+- Colisão AABB por eixos com subpassos, inclusive em paredes, árvores, bombas, veículos, móveis e portas/portão. Painéis abertos também colidem. A porta não fecha sobre o jogador. Chão plano e limites externos de 58 m.
 
-## Arquivos
+**Meta de 30 FPS em celulares intermediários ainda não certificada.** O teste automatizado mede chamadas, triângulos e tempos no Chromium/SwiftShader deste ambiente, sem equivalência a uma GPU de celular. Android/iOS físicos ainda precisam de validação.
 
-```text
-index.html
-package.json
-package-lock.json
-tsconfig.json
-.gitignore
-README.md
-public/fonts/OFL.txt
-public/fonts/vt323-latin-400-normal.woff2
-src/main.ts
-src/style.css
-src/core/Game.ts
-src/core/GameLoop.ts
-src/core/SceneManager.ts
-src/player/PlayerController.ts
-src/player/CameraController.ts
-src/input/InputManager.ts
-src/input/TouchInput.ts
-src/input/VirtualJoystick.ts
-src/systems/CollisionSystem.ts
-src/systems/GraphicsSettings.ts
-src/ui/MainMenu.ts
-src/ui/MobileControls.ts
-src/world/TestEnvironment.ts
+## Áudio: assets pendentes
+
+Não há arquivos de áudio fornecidos, portanto **nenhum desses sons foi implementado como conteúdo audível**. `src/audio/AudioManager.ts` oferece carregamento, volume, loops, pausa/retomada, atenuação por distância e passos condicionados ao movimento. `AUDIO_ASSETS` permanece vazio. Para ativar, adicione arquivos licenciados a `public/audio/` e registre seus caminhos, volumes e loops no manifesto.
+
+Pendências: chuva, insetos, vento, eletricidade/gerador, rádio e passos. Sons posicionais podem usar `position` e `range`; não há processamento HRTF ou oclusão.
+
+## Testes
+
+Com o servidor Vite em execução em outro terminal:
+
+```sh
+npm run test:browser
 ```
 
-## Validação desta entrega
+Requer Chromium instalado. Caminho padrão `/usr/bin/chromium`; defina `CHROMIUM_PATH` para outro executável e `GAME_URL` para outro servidor. O teste usa `playwright-core`, sem baixar navegadores automaticamente.
 
-`npm install` (cache gravável) e `npm run build` concluídos. Chromium headless com WebGL por SwiftShader: menus, seleção gráfica, créditos, lanterna e pausa; verificações de colisão, limite vertical da câmera, caminhada/corrida e deslocamento equivalente a 30/120 FPS. Viewport mobile: controles, pausa e tela vertical; eventos sintéticos com dois pointerIds verificam movimento/olhar simultâneos e cancelamento. Sem erros de execução no navegador.
+O teste valida trajetos reais pelo sistema de movimento/colisão até a loja, os quatro cômodos, estrada e clareira; portas fechadas e abertas; portão; colisões de objetos e árvore; descarregamento de setores; menus; lanterna; pausa e orientação mobile. Injeta dois toques simultâneos pelo protocolo do Chromium. Também renderiza uma amostra de 35 frames em 422×195 e informa mediana/p95, chamadas e triângulos. Isso não substitui jogar em aparelhos físicos.
 
-A emulação e os eventos sintéticos não substituem testes em aparelhos físicos: Safari/iOS e Chrome/Android ainda precisam de verificação real. Sem testes de campanha, áudio, inimigos ou posto completo, pois estão fora desta etapa.
+## Organização
+
+Módulos da Etapa 1 preservados em `core/`, `player/`, `input/`, `systems/` e `ui/`. O antigo `world/TestEnvironment.ts` permanece disponível para diagnóstico, mas não é mais o cenário ativo.
+
+Novos módulos da Etapa 2:
+
+- `world/GameWorld.ts`: composição, estrada, trilha, clareira e interações.
+- `world/GasStation.ts`: posto, interiores, veículos e objetos.
+- `world/WorldAssets.ts`: geometrias, materiais, texturas e agrupamento estático.
+- `world/WorldInteraction.ts`: interações e estados das portas.
+- `world/ForestSectors.ts`: vegetação instanciada e streaming.
+- `world/Atmosphere.ts`: chuva e poças.
+- `audio/AudioManager.ts`: infraestrutura sem assets sonoros.
+- `tests/world.mjs`: verificação automatizada e medição de renderização.

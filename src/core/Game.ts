@@ -7,7 +7,10 @@ import { PlayerController } from '../player/PlayerController';
 import { GraphicsSettings } from '../systems/GraphicsSettings';
 import { MainMenu } from '../ui/MainMenu';
 import { MobileControls } from '../ui/MobileControls';
+import { AudioManager } from '../audio/AudioManager';
 export class Game {
+  private readonly audio=new AudioManager();
+  private readonly lastPosition=new Vector3();
   private readonly renderer = new WebGLRenderer({antialias:false,powerPreference:'high-performance'});
   private readonly world = new SceneManager();
   private readonly input: InputManager;
@@ -28,7 +31,7 @@ export class Game {
     this.graphics=new GraphicsSettings(this.renderer);this.graphics.resize();
     this.input=new InputManager(this.renderer.domElement);
     this.player=new PlayerController(new CameraController(this.world.camera),this.world.collisions);
-    this.hud.className='hud';this.hud.innerHTML='<div class="hud-top"><span>BR-319 <small>AMAZONAS · 2004</small></span><span class="live">● RAIMUNDO PINHEIRO</span></div><span class="crosshair">+</span><div class="hud-bottom"><span>01 <small>EXPLORAÇÃO</small></span><span class="lamp-status"></span></div>';
+    this.hud.className='hud';this.hud.innerHTML='<div class="hud-top"><span>BR-319 <small>AMAZONAS · 2004</small></span><span class="live">● RAIMUNDO PINHEIRO</span></div><span class="crosshair">+</span><div class="hud-bottom"><span>02 <small>EXPLORAÇÃO</small></span><span class="lamp-status"></span></div>';
     root.append(this.hud);this.toast.className='toast';this.toast.setAttribute('role','status');root.append(this.toast);this.prompt.className='interaction-prompt';root.append(this.prompt);
     this.mobile=new MobileControls(root,this.input);
     this.menu=new MainMenu(root,this.graphics,()=>this.resume());
@@ -37,7 +40,7 @@ export class Game {
       if(action==='pause'){if(this.started){if(this.paused)this.resume();else this.pause();}return;}
       if(this.paused)return;
       if(action==='flashlight'){this.world.flashlight.visible=!this.world.flashlight.visible;this.updateLamp();}
-      if(action==='interact')this.message(this.canInteract()?'BR-319. Manaus, 147 km. A próxima luz parece muito distante.':'Nada ao alcance. Aproxime-se da placa da estrada.');
+      if(action==='interact'){this.world.camera.getWorldDirection(this.direction);const item=this.world.environment.findInteraction(this.player.position,this.direction);this.message(item?item.use(this.player.position):'Nada ao alcance. Aproxime-se e olhe para uma porta, placa ou documento.');}
     };
     document.addEventListener('pointerlockchange',()=>{if(this.started&&!this.paused&&!document.pointerLockElement&&!this.isTouch())this.pause();});
     this.renderer.domElement.addEventListener('click',()=>{if(!this.paused&&!this.isTouch())this.lockPointer();});
@@ -45,11 +48,20 @@ export class Game {
     document.addEventListener('visibilitychange',()=>{if(document.hidden)this.pause();});
     window.addEventListener('resize',()=>{this.resize();if(this.isTouch()&&innerHeight>innerWidth)this.pause();});
     this.renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();this.pause();this.loop.stop();this.message('A conexão gráfica foi interrompida. Recarregue a página.');});
-    this.loop=new GameLoop(dt=>{
-      if(!this.paused){this.player.update(this.input,dt);this.graphics.sample(dt);this.prompt.textContent=this.canInteract()?'E · LER PLACA':'';}
+    this.loop=new GameLoop((dt,rawDt)=>{
+      if(!this.paused){
+        this.world.environment.update(dt,this.player.position,this.graphics.renderDistance);
+        this.lastPosition.copy(this.player.position);this.player.update(this.input,dt);
+        this.audio.update(this.player.position.x,this.player.position.z,this.lastPosition.distanceToSquared(this.player.position)>.000001);
+        this.graphics.sample(rawDt);this.world.camera.getWorldDirection(this.direction);
+        const item=this.world.environment.findInteraction(this.player.position,this.direction);this.prompt.textContent=item?`E · ${item.label}`:'';
+      }
+      if(this.world.camera.far!==this.graphics.renderDistance){this.world.camera.far=this.graphics.renderDistance;this.world.camera.updateProjectionMatrix();}
       this.renderer.render(this.world.scene,this.world.camera);
     });
     this.updateLamp();this.loop.start();
+    window.addEventListener('pagehide',()=>{this.audio.pause();});
+    window.addEventListener('pageshow',()=>{if(!this.paused)this.audio.resume();});
   }
   private isTouch(): boolean {return matchMedia('(pointer: coarse)').matches;}
   private lockPointer(): void {
@@ -58,18 +70,13 @@ export class Game {
   }
   private resume(): void {
     if(this.isTouch()&&innerHeight>innerWidth)return;
-    this.started=true;this.paused=false;this.input.reset();this.input.enabled=true;this.menu.hide();this.mobile.show(true);this.hud.hidden=false;this.root.classList.add('playing');
+    this.audio.resume();this.started=true;this.paused=false;this.input.reset();this.input.enabled=true;this.menu.hide();this.mobile.show(true);this.hud.hidden=false;this.root.classList.add('playing');
     if(!this.isTouch())this.lockPointer();
   }
   private pause(): void {
     if(!this.started||this.paused)return;
-    this.paused=true;this.input.enabled=false;this.input.reset();this.mobile.show(false);this.hud.hidden=true;this.prompt.textContent='';this.menu.show(true);this.root.classList.remove('playing');
+    this.audio.pause();this.paused=true;this.input.enabled=false;this.input.reset();this.mobile.show(false);this.hud.hidden=true;this.prompt.textContent='';this.menu.show(true);this.root.classList.remove('playing');
     if(document.pointerLockElement)document.exitPointerLock();
-  }
-  private canInteract(): boolean {
-    const offset=this.world.environment.signPosition.clone().sub(this.player.position);
-    this.world.camera.getWorldDirection(this.direction);
-    return offset.length()<2.8&&this.direction.dot(offset.normalize())>0.7;
   }
   private updateLamp(): void {this.hud.querySelector('.lamp-status')!.textContent=`F · LANTERNA ${this.world.flashlight.visible?'LIGADA':'DESLIGADA'}`;}
   private message(text: string): void {clearTimeout(this.messageTimer);this.toast.textContent=text;this.toast.classList.add('visible');this.messageTimer=window.setTimeout(()=>this.toast.classList.remove('visible'),4500);}

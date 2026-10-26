@@ -3,6 +3,8 @@ export type Quality = 'Baixo' | 'Médio' | 'Alto';
 export class GraphicsSettings {
   quality: Quality = 'Médio';
   adaptive = true;
+  renderDistance = 48;
+  setDistance(distance:number):void { this.renderDistance=Math.max(28,Math.min(72,distance)); }
   private scale = 1;
   private elapsed = 0;
   private frames = 0;
