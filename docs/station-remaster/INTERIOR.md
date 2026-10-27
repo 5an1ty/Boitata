@@ -32,3 +32,11 @@ A remodelagem preserva o estilo PSX e as colisões conservadoras dos móveis gra
 - `node tests/interior-captures.mjs`: quatro capturas conferidas visualmente.
 
 Os testes de percurso foram atualizados para os novos acessos, mantendo os testes de raycast e colisão. Durante a validação foram corrigidas duas interferências dos novos suportes nas rotas, sem remover suas colisões.
+
+## Exploração livre e balcão
+
+A gaveta abre sem exigir a leitura do balcão. Anotação elétrica e manual do transmissor são dicas, não permissões para testar soluções. Evidências e registros podem ser recolhidos fora da ordem sugerida e antes do capítulo correspondente. O rádio do caminhão pode ser usado diretamente, e os relés finais podem ser desligados em qualquer ordem. A progressão reconhece os itens já recolhidos. Permanecem os requisitos físicos de chave, fusível, energia e as condições narrativas dos capítulos/finais.
+
+O save aceita a conclusão do primeiro capítulo sem ler o chamado ou coletar a anotação; não inventa objetivos concluídos. Saves anteriores continuam aceitos. `tests/free-exploration.mjs` verifica essas alternativas e seu carregamento, além da solução do transmissor sem manual e do save com o relé da trilha desligado primeiro. Os testes completos de capítulo e campanha também passaram.
+
+Os documentos decorativos estavam sob o acabamento do tampo. Agora ficam acima dele, separados da [ordem de serviço legível](counter-document.png), cujo alvo de interação coincide com a folha. A captura usa iluminação de inspeção.

@@ -13,7 +13,6 @@ export function validCampaign(value:unknown):value is CampaignData {
  if(d.ending===null&&d.completed.includes('4.conclude'))return false;
  if(d.ending==='road'&&!d.completed.includes('4.return'))return false;
  if(d.ending!==null&&d.ending!=='road'&&!d.completed.includes('4.conclude'))return false;
- if(d.flags.includes('forestRelay')&&!d.flags.includes('roadRelay'))return false;
  if(d.completed.includes('3.puzzle')&&!d.flags.includes('transmitter')||d.completed.includes('4.evidence')&&!d.flags.includes('payload'))return false;
  return true;
 }

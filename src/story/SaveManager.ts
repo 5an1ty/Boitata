@@ -17,13 +17,12 @@ export function validateSave(value:unknown):value is ChapterSave {
  const facts=v.objectives as string[],puzzles=v.puzzles as string[],flags=v.flags as string[],events=v.events as string[];
  if(facts.includes('key')&&!items.key||facts.includes('fuse')&&!items.fuse||facts.includes('note')&&!items.note)return false;
  if(facts.includes('store')&&!(v.unlocked as string[]).includes('DEPÓSITO'))return false;
- if(facts.includes('puzzle')&&!puzzles.includes('generator')||puzzles.includes('generator')&&(!flags.includes('fuseInstalled')||!items.note||!facts.includes('puzzle')))return false;
+ if(facts.includes('puzzle')&&!puzzles.includes('generator')||puzzles.includes('generator')&&(!flags.includes('fuseInstalled')||!facts.includes('puzzle')))return false;
  if(facts.includes('power')&&!puzzles.includes('generator')||facts.includes('camera')&&!facts.includes('power')||events.includes('blackout')&&!facts.includes('camera'))return false;
  if(flags.includes('fuseInstalled')&&items.fuse!=='used')return false;
  if((v.unlocked as string[]).includes('DEPÓSITO')&&items.key!=='used')return false;
  if(items.key&&!flags.includes('drawer'))return false;
- if(flags.includes('ending')&&facts.length!==OBJECTIVES.length)return false;
- if(v.chapter===2&&facts.length!==OBJECTIVES.length)return false;
+ if(flags.includes('ending')&&!facts.includes('camera'))return false;
  if(v.chapter===2&&(!flags.includes('ending')||!facts.includes('camera')||!events.includes('blackout')))return false;
  return true;
 }

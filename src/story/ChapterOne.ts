@@ -1,5 +1,5 @@
 import {settings} from '../systems/SettingsStore';
-import {Vector3,type Mesh} from 'three';
+import {Vector3,CanvasTexture,Mesh,MeshLambertMaterial,PlaneGeometry,NearestFilter,SRGBColorSpace} from 'three';
 import {ENDING,INTRO,ITEMS,PUZZLE,type ItemId} from '../data/chapter1';
 import type {GameWorld} from '../world/GameWorld';
 import type {WorldInteraction} from '../world/WorldInteraction';
@@ -37,9 +37,9 @@ export class ChapterOne {
   }
   const object=(label:string,position:Vector3,use:()=>string):ChapterObject=>{const item={label,position,enabled:true,use};this.objects.push(item);this.interaction.register(item);return item;};
   const a=world.assets,g=world.station.group;
-  object('INVESTIGAR BALCÃO',new Vector3(17.8,1.45,-11.3),()=>{this.objectives.complete('counter');this.horror.trigger('silhouette',()=>{this.effects.showSilhouette();this.notify('Uma silhueta se move do lado de fora da porta.');});this.persist();return 'O chamado está sobre o balcão: Raimundo Pinheiro, manutenção elétrica. A gaveta à esquerda está entreaberta. O gerador fica no lado externo direito.';});
+  object('INVESTIGAR BALCÃO',new Vector3(17.8,1.46,-11.65),()=>{this.objectives.complete('counter');this.horror.trigger('silhouette',()=>{this.effects.showSilhouette();this.notify('Uma silhueta se move do lado de fora da porta.');});this.persist();return 'O chamado está sobre o balcão: Raimundo Pinheiro, manutenção elétrica. A gaveta à esquerda está entreaberta. O gerador fica no lado externo direito.';});
   const drawer=a.box(g,15.8,1,-11.42,.7,.24,.1,0x655b40,false);
-  const drawerObject=object('ABRIR GAVETA',new Vector3(15.8,1,-11.3),()=>{if(!this.objectives.facts.has('counter'))return 'Examine primeiro os documentos no balcão.';this.flags.add('drawer');drawerObject.enabled=false;drawer.position.z=-11.15;const pickup=this.pickups.get('key')!;pickup.object.enabled=!this.inventory.has('key');pickup.mesh.visible=pickup.object.enabled;this.persist();return 'A gaveta abriu. Há uma chave sobre a madeira.';});
+  const drawerObject=object('ABRIR GAVETA',new Vector3(15.8,1,-11.3),()=>{this.flags.add('drawer');drawerObject.enabled=false;drawer.position.z=-11.15;const pickup=this.pickups.get('key')!;pickup.object.enabled=!this.inventory.has('key');pickup.mesh.visible=pickup.object.enabled;this.persist();return 'A gaveta abriu. Há uma chave sobre a madeira.';});
   if(this.flags.has('drawer')){drawerObject.enabled=false;drawer.position.z=-11.15;}
   const pickup=(id:ItemId,x:number,y:number,z:number,color:number,allowed:()=>boolean=()=>true)=>{
    const mesh=a.box(g,x,y,z,.28,.12,.22,color,false);mesh.visible=!this.inventory.has(id)&&allowed();
@@ -59,7 +59,13 @@ export class ChapterOne {
   object('USAR RÁDIO',new Vector3(17,1.6,-11.35),()=>this.radio());
   object('ATENDER TELEFONE',new Vector3(19,1.65,-11.3),()=>{this.sounds.tone('static');this.dialogue.play([{speaker:'TELEFONE',text:'[Linha muda. Um ruído parece acompanhar a chuva.]',duration:4}]);return 'Raimundo levanta o telefone.';});
   object('EXAMINAR TELEVISÃO',new Vector3(-1,2.15,-11.5),()=>{this.effects.interfere();this.sounds.tone('static');return 'A tela do tubo só mostra interferência. A câmera de segurança fica no terminal do balcão.';});
-  a.label(g,'CHAMADO',17.8,1.47,-11.3,.55);
+  // The work order lies above the finished counter, not inside its decorative top.
+  const page=document.createElement('canvas');page.width=512;page.height=256;const ink=page.getContext('2d')!;
+  ink.fillStyle='#c9bd99';ink.fillRect(0,0,512,256);ink.fillStyle='#393a2d';ink.font='bold 27px monospace';
+  ink.fillText('ORDEM DE SERVIÇO',24,42);ink.font='21px monospace';
+  ['21 NOV 2004 · 23:47','RAIMUNDO PINHEIRO','MANUTENÇÃO ELÉTRICA','Gerador: lateral direita.'].forEach((line,i)=>ink.fillText(line,24,85+i*39));
+  const paperMap=new CanvasTexture(page);paperMap.magFilter=paperMap.minFilter=NearestFilter;paperMap.colorSpace=SRGBColorSpace;
+  const workOrder=new Mesh(new PlaneGeometry(.8,.5),new MeshLambertMaterial({map:paperMap}));workOrder.position.set(17.8,1.455,-11.65);workOrder.rotation.x=-Math.PI/2;g.add(workOrder);
   const camera=a.box(g,14,1.65,-11.8,.7,.5,.4,0x324e43,false);a.label(g,'CFTV',14,1.65,-11.56,.6);
   object('USAR CÂMERA DE SEGURANÇA',new Vector3(14,1.65,-11.5),()=>{if(!this.objectives.facts.has('power'))return 'Câmera sem energia. Restaure o gerador primeiro.';if(this.objectives.facts.has('camera'))return 'Gravação observada. A interferência veio da retransmissora na floresta.';this.cameraTime=0;this.ui.camera(()=>this.finishCamera());this.horror.trigger('camera',()=>this.sounds.tone('static'));camera.visible=true;this.persist();return 'Câmera 01 — borda da floresta.';});
   object('ABRIR PAINEL DO GERADOR',this.generatorPosition,()=>{this.objectives.complete('generator');this.showGenerator();this.persist();return 'Painel de três circuitos. Consulte a anotação elétrica.';});
@@ -109,7 +115,7 @@ export class ChapterOne {
   this.inventory.use(id);this.persist();return this.inventory.describe(id);
  }
  private radio():string {this.sounds.tone('static');this.dialogue.play([{speaker:'RAIMUNDO PINHEIRO · RÁDIO',text:this.chapter===2?'A origem da interferência fica na floresta. Preciso seguir até a antena.':'Seu Antônio? Estou verificando o gerador. Responda, por favor.',duration:5},{speaker:'RÁDIO',text:'[Apenas estática]',duration:2}]);return 'Rádio sintonizado no canal do posto.';}
- private showGenerator():void {this.ui.generator(this.flags.has('fuseInstalled'),this.progress,n=>this.pressSwitch(n),()=>{this.notify(this.installFuse());this.showGenerator();},()=>this.notify(this.inventory.has('note')?PUZZLE.clue:'Procure a anotação na sala elétrica, no fundo da conveniência.'));}
+ private showGenerator():void {this.ui.generator(this.flags.has('fuseInstalled'),this.progress,n=>this.pressSwitch(n),()=>{this.notify(this.installFuse());this.showGenerator();},()=>this.notify(this.inventory.has('note')?PUZZLE.clue:'A anotação na sala elétrica explica a sequência; você também pode tentar os circuitos.'));}
  installFuse():string {
   if(this.flags.has('fuseInstalled'))return 'O fusível já está instalado.';
   if(!this.inventory.has('fuse'))return 'Você precisa encontrar o fusível no depósito.';
@@ -118,7 +124,6 @@ export class ChapterOne {
  pressSwitch(n:number):void {
   if(this.puzzles.has('generator')){this.notify('O gerador já está funcionando.');return;}
   if(!this.flags.has('fuseInstalled')){this.notify('Instale primeiro o fusível.');return;}
-  if(!this.inventory.has('note')){this.notify('Localize a anotação elétrica antes de rearmar os circuitos.');return;}
   if(n!==PUZZLE.sequence[this.progress.length]){this.progress=[];this.sounds.tone('static');this.notify('Sequência incorreta. Circuitos reiniciados. Tente novamente.');this.showGenerator();return;}
   this.progress.push(n);
   if(this.progress.length===PUZZLE.sequence.length){this.puzzles.add('generator');this.objectives.complete('puzzle');this.world.powerTarget=1;this.sounds.tone('electricity');this.ui.close();this.notify('Gerador ligado. Aguarde a iluminação estabilizar.');this.persist();}else this.showGenerator();

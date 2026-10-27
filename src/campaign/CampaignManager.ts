@@ -40,7 +40,7 @@ export class CampaignManager {
    this.done('evade',this.creature.checkpoint.seen.has('embers')&&!this.creature.apparitionActive&&!flashlight&&player.z>32&&this.creature.ai.state!=='CHASE');
    if(this.done('installation',player.distanceTo(new Vector3(20,1.65,42))<6)){this.chapters.advance();this.checkpointAt('installation');}
   }
-  if(stage===3){for(const [goal,item]of [['photo','burnPhoto'],['recording','recording'],['transport','transport']] as const)if(this.done(goal,this.chapter.inventory.has(item))&&goal==='transport')this.checkpointAt('evidence');}
+  if(stage===3){this.done('puzzle',this.flags.has('transmitter'));for(const [goal,item]of [['photo','burnPhoto'],['recording','recording'],['transport','transport']] as const)if(this.done(goal,this.chapter.inventory.has(item))&&goal==='transport')this.checkpointAt('evidence');}
   if(stage===4){
    if(this.done('return',player.z<16&&player.x> -7&&player.x<30))this.persist();
    if(this.chapters.has('4.return')&&!this.flags.has('returnScene'))this.returnScene();
@@ -50,9 +50,7 @@ export class CampaignManager {
   this.props.needle.rotation.z=this.flags.has('payload')?Math.sin(this.seconds*9)*.5:0;
  }
  private collect(id:ItemId):string {
-  if(!this.chapters.ready)return 'Primeiro conclua a investigação elétrica do posto.';
   const order:Partial<Record<ItemId,string>>={burnPhoto:'photo',recording:'recording',transport:'transport'};
-  if(order[id]&&(this.chapters.current!==3||this.chapters.key!==order[id]))return 'Examine os arquivos e siga as indicações dos documentos: fotografia, gravação e transporte.';
   if(!this.chapter.inventory.add(id))return ITEMS[id].description;
   if(order[id])this.done(order[id]!);
   if(id==='transmitterManual')this.flags.add('manual');
@@ -64,25 +62,25 @@ export class CampaignManager {
   if(!this.chapters.ready)return 'O chamado elétrico precisa ser resolvido antes de seguir adiante.';
   if(this.chapters.result)return 'A história já chegou a um final.';
   const stage=this.chapters.current;
-  if(id==='truck'&&stage===2){return this.done('truck')?'Caminhão abandonado. A cabine está vazia; o rádio fica no lado direito, junto ao para-brisa.':'Siga primeiro a estrada e examine o caminhão quando esse for o objetivo.';}
-  if(id==='truckRadio'&&stage===2){if(!this.done('truckRadio'))return 'Examine primeiro o caminhão.';this.flags.add('truckMessage');this.chapter.dialogue.play([{speaker:'RÁDIO DO CAMINHÃO',text:'O caminhão não voltou da queimada. A trilha fica atrás do posto. Arquivos na antena: foto, gravação, transporte. Não corra quando as árvores acenderem.',duration:8}]);this.persist();return 'Gravação recuperada. Retorne à placa da trilha atrás do posto.';}
+  if(id==='truck'&&stage===2){this.done('truck');return 'Caminhão abandonado. A cabine está vazia; o rádio fica no lado direito, junto ao para-brisa.';}
+  if(id==='truckRadio'&&stage===2){this.done('truck');this.done('truckRadio');this.flags.add('truckMessage');this.chapter.dialogue.play([{speaker:'RÁDIO DO CAMINHÃO',text:'O caminhão não voltou da queimada. A trilha fica atrás do posto. Arquivos na antena: foto, gravação, transporte. Não corra quando as árvores acenderem.',duration:8}]);this.persist();return 'Gravação recuperada. Retorne à placa da trilha atrás do posto.';}
   if(id==='explore'&&stage===3)return this.done('explore')?'Três arquivos: fotografia na sala oeste, gravação no centro, transporte na sala leste. Leia também o manual à entrada.':'Arquivos examinados. Siga o objetivo atual.';
   if(id==='link'&&stage===3){if(!this.done('link',REQUIRED_EVIDENCE.every(i=>this.chapter.inventory.has(i))))return 'Compare depois de reunir as três evidências.';this.flags.add('linked');this.persist();this.chapter.dialogue.play([{speaker:'RAIMUNDO PINHEIRO',text:'Os tambores saíam do posto. A gravação confirma as queimadas. O Boitatá acordou para defender esta floresta. Preciso enviar essas provas.',duration:8}]);return 'Fotografia, gravação e guia compartilham a mesma carga P-319.';}
   if(id==='cover'&&stage===3){const hidden=!this.creature.ai.perceive({position:this.player,look:this.look,flashlight:this.flashlight,moving:false,running:false,narrativeReady:true,protected:false}).visible;if(!this.done('evade',!this.flashlight&&hidden&&!this.creature.blocking))return 'Apague a lanterna e fique no lado protegido do painel. Primeiro resolva a comunicação.';this.creature.retreat();return 'Você quebrou a linha de visão. Volte à base da antena e feche o acoplador.';}
   if(id==='equipment'&&stage===4){
    if(this.done('equipment')){this.world.powerTarget=.6;this.world.blackoutTime=-1;return 'Equipamento auxiliar reativado. Interaja novamente para carregar as evidências.';}
-   if(this.chapters.key==='evidence'){if(!REQUIRED_EVIDENCE.every(i=>this.chapter.inventory.has(i)))return 'Faltam provas da instalação.';REQUIRED_EVIDENCE.forEach(i=>this.chapter.inventory.use(i));this.flags.add('payload');this.done('evidence');this.chapter.persist();this.checkpointAt('final');return 'Evidências carregadas. Desligue o relé da rodovia e depois o da trilha. Apague a lanterna, escape da guardiã e volte para transmitir. Você também pode abandonar as provas e fugir no carro.';}
+   if(this.chapters.key==='evidence'){if(!REQUIRED_EVIDENCE.every(i=>this.chapter.inventory.has(i)))return 'Faltam provas da instalação.';REQUIRED_EVIDENCE.forEach(i=>this.chapter.inventory.use(i));this.flags.add('payload');this.done('evidence');this.chapter.persist();this.checkpointAt('final');return 'Evidências carregadas. Desligue os relés da rodovia e da trilha, em qualquer ordem. Apague a lanterna, escape da guardiã e volte para transmitir. Você também pode abandonar as provas e fugir no carro.';}
    if(this.chapters.key==='conclude'){this.finish(OPTIONAL_RECORDS.every(i=>this.chapter.inventory.has(i))?'witness':'dawn');return 'Enviando as provas e registros disponíveis.';}
    return 'Dois bloqueadores ainda interferem: rodovia e trilha. Conclua as ações externas e retorne.';
   }
-  if((id==='roadRelay'||id==='forestRelay')&&stage===4){if(!this.flags.has('payload'))return 'Prepare primeiro as provas no transmissor do posto.';if(id==='forestRelay'&&!this.flags.has('roadRelay'))return 'Desligue primeiro o relé da rodovia.';this.flags.add(id);this.persist();return id==='roadRelay'?'Relé da rodovia desligado. Falta o da trilha.':'Relé da trilha desligado. Escape e retorne ao equipamento externo do posto.';}
+  if((id==='roadRelay'||id==='forestRelay')&&stage===4){if(!this.flags.has('payload'))return 'Prepare primeiro as provas no transmissor do posto.';this.flags.add(id);this.persist();return id==='roadRelay'?'Relé da rodovia desligado. Falta o da trilha.':'Relé da trilha desligado. Escape e retorne ao equipamento externo do posto.';}
   if(id==='car'&&stage===4&&this.chapters.has('4.return')){this.chapter.ui.campaign('ABANDONAR A TRANSMISSÃO?',panel=>{const p=document.createElement('p');p.textContent='Fugir encerra a história sem enviar as provas. Você pode ficar e tentar a transmissão.';panel.append(p);this.button(panel,'Fugir pela estrada',()=>{this.chapter.ui.close();this.finish('road');});this.button(panel,'Ficar e investigar',()=>this.chapter.ui.close());});return 'A chave está na ignição.';}
   return 'Siga o objetivo indicado antes de operar este equipamento.';
  }
  private transmitter(_p:Vector3):string {
   if(this.chapters.current!==3)return this.chapters.current<3?'A instalação ainda precisa ser alcançada pela trilha.':'Sinal local restaurado. O bloqueio principal está no posto.';
   if(this.chapters.key==='restore'){this.flags.add('coupler');this.done('restore');this.chapters.advance();this.chapter.dialogue.play([{speaker:'RÁDIO · OPERADOR',text:'O sinal local chegou, mas há um bloqueador perto do posto. Volte com as provas. O transmissor auxiliar fica na lateral direita.',duration:7}]);this.persist();return 'Acoplador fechado. Alimentação parcial restaurada.';}
-  if(this.chapters.key!=='puzzle')return 'Leia e compare os três arquivos antes de rearmar a comunicação; depois use a cobertura do painel.';
+  if(this.flags.has('transmitter'))return 'Sinal estabilizado. Reúna as evidências e use a cobertura do painel para voltar ao acoplador.';
   this.showTransmitter();return 'Painel de frequência, alimentação e chave de transmissão.';
  }
  private showTransmitter():void {
@@ -91,7 +89,7 @@ export class CampaignManager {
    const signal=document.createElement('p');signal.setAttribute('role','status');panel.append(signal);
    const update=()=>{signal.textContent=`Sinal local: ${Math.round(([frequency.value===TRANSMITTER.frequency,power.value===TRANSMITTER.power,key.value===TRANSMITTER.key].filter(Boolean).length/3)*100)}%`;};[frequency,power,key].forEach(s=>s.onchange=update);update();
    this.button(panel,'Consultar manual',()=>this.notify(this.chapter.inventory.has('transmitterManual')?ITEMS.transmitterManual.description:'Manual à entrada dos arquivos, perto da placa.'));
-   this.button(panel,'Verificar e rearmar',()=>{if(!this.chapter.inventory.has('transmitterManual')){signal.textContent='Leia o manual primeiro: frequência, tensão e chave estão documentadas.';return;}if(frequency.value!==TRANSMITTER.frequency||power.value!==TRANSMITTER.power||key.value!==TRANSMITTER.key){signal.textContent='Configuração incorreta. Nenhum componente foi perdido; tente novamente.';return;}this.flags.add('transmitter');this.done('puzzle');this.chapter.ui.close();this.chapter.sounds.tone('electricity');this.notify('Sinal local estabilizado. Apague a lanterna e use a cobertura do painel antes de fechar o acoplador.');});
+   this.button(panel,'Verificar e rearmar',()=>{if(frequency.value!==TRANSMITTER.frequency||power.value!==TRANSMITTER.power||key.value!==TRANSMITTER.key){signal.textContent='Configuração incorreta. Nenhum componente foi perdido; tente novamente.';return;}this.flags.add('transmitter');this.done('puzzle');this.chapter.ui.close();this.chapter.sounds.tone('electricity');this.notify('Sinal local estabilizado. Apague a lanterna e use a cobertura do painel antes de fechar o acoplador.');});
    this.button(panel,'Fechar transmissor',()=>this.chapter.ui.close());
   });
  }

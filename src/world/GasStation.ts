@@ -57,7 +57,7 @@ export class GasStation {
     b(-1,2.15,-12,.8,.65,.6,0x454938,false);b(-1,2.15,-11.68,.65,.45,.04,0x66867c,false);label('SEM SINAL',-1,2.15,-11.64,.6);
     b(17,1.55,-12,.65,.3,.25,0x6f6950,false);label('AM 319',17,1.6,-11.84,.6);
     b(10,2.6,-19.83,.65,.65,.08,0xb9b49a,false);label('02 : 17',10,2.6,-19.77,.6);
-    for(let i=0;i<4;i++){const paper=b(16+i*.45,1.425,-11.7,.35,.01,.25,0xc9c6a0,false);paper.rotation.y=i*.5;}
+    for(let i=0;i<4;i++){const paper=b(16+i*.3,1.45,-11.7,.35,.01,.25,0xc9c6a0,false);paper.rotation.y=i*.5;}
     this.interactions.push({position:new Vector3(17,1.4,-11.5),label:'LER DOCUMENTOS',use:()=> 'Registro de 2004: manter a passagem da floresta livre. Antena de comunicação na clareira.'});
     // Bathroom: toilet, sink, mirror, pipe.
     b(0,.35,-24,.8,.7,1,0xb4b9a2);b(0,.9,-24.4,.8,.9,.25,0xb4b9a2);b(2.5,1,-24.8,1,1,.6,0xa4ad95);b(2.5,1.95,-25.8,1,1,.04,0x617b71,false);
