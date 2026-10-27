@@ -1,6 +1,6 @@
 {
   "name": "boitata",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,10 @@
     "test:browser": "node tests/world.mjs",
     "test:chapter": "node tests/chapter.mjs",
     "test:creature": "node tests/creature.mjs",
-    "test:campaign": "node tests/campaign.mjs"
+    "test:campaign": "node tests/campaign.mjs",
+    "test:release": "node tests/release.mjs",
+    "test:preferences": "node tests/preferences.mjs",
+    "test": "npm run test:chapter && npm run test:campaign && npm run test:creature && npm run test:browser && npm run test:preferences"
   },
   "dependencies": {
     "three": "^0.180.0"

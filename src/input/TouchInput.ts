@@ -1,3 +1,4 @@
+import {settings} from '../systems/SettingsStore';
 import type { InputManager } from './InputManager';
 export class TouchInput {
   constructor(element: HTMLElement, input: InputManager) {
@@ -8,7 +9,7 @@ export class TouchInput {
     });
     element.addEventListener('pointermove', e => {
       if (e.pointerId !== pointer || !input.enabled) return;
-      input.lookX += (e.clientX - x) * 1.5; input.lookY += (e.clientY - y) * 1.5; x = e.clientX; y = e.clientY;
+      input.lookX += (e.clientX - x) * 1.5*settings.value.touchSensitivity; input.lookY += (e.clientY - y) * 1.5*settings.value.touchSensitivity; x = e.clientX; y = e.clientY;
     });
     for (const event of ['pointerup','pointercancel','lostpointercapture']) element.addEventListener(event, e => { if ((e as PointerEvent).pointerId === pointer) pointer = null; });
   }

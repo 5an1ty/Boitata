@@ -1,3 +1,4 @@
+import {settings} from '../systems/SettingsStore';
 import {CanvasTexture,Group,Mesh,MeshBasicMaterial,NearestFilter,PlaneGeometry,Vector3} from 'three';
 import type {GameWorld} from '../world/GameWorld';
 export class StoryEffects {
@@ -23,7 +24,7 @@ export class StoryEffects {
  update(dt:number,player:Vector3):void {
   this.silhouetteTime=Math.max(0,this.silhouetteTime-dt);this.tvTime=Math.max(0,this.tvTime-dt);this.pumpTime=Math.max(0,this.pumpTime-dt);
   this.silhouette.visible=this.silhouetteTime>0;this.silhouette.lookAt(player.x,1.15,player.z);this.television.visible=this.tvTime>0;this.pump.visible=this.pumpTime>0;
-  this.noiseClock+=dt;if(this.tvTime>0&&this.noiseClock>.12){this.noiseClock=0;const ctx=this.canvas.getContext('2d')!;for(let y=0;y<48;y+=3)for(let x=0;x<64;x+=3){const n=Math.floor(Math.random()*170);ctx.fillStyle=`rgb(${n},${n+10},${n})`;ctx.fillRect(x,y,3,3);}this.texture.needsUpdate=true;}
+  this.noiseClock+=dt;if(this.tvTime>0&&this.noiseClock>.12){this.noiseClock=0;const ctx=this.canvas.getContext('2d')!;for(let y=0;y<48;y+=3)for(let x=0;x<64;x+=3){const n=Math.floor(Math.random()*(settings.value.reduceFlashes?50:170));ctx.fillStyle=`rgb(${n},${n+10},${n})`;ctx.fillRect(x,y,3,3);}this.texture.needsUpdate=true;}
  }
  dispose():void {for(const mesh of [this.silhouette,this.television,this.pump]){mesh.geometry.dispose();const m=mesh.material as MeshBasicMaterial;m.map?.dispose();m.dispose();}this.group.removeFromParent();}
 }

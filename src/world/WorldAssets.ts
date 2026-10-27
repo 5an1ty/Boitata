@@ -23,7 +23,7 @@ export class WorldAssets {
   }
   batch(parent:Group):void {
     const batches=new Map<MeshLambertMaterial,Mesh[]>();
-    for(const child of [...parent.children])if(child instanceof Mesh&&child.geometry===this.cube&&child.material instanceof MeshLambertMaterial&&!child.material.transparent){
+    for(const child of [...parent.children])if(child instanceof Mesh&&!(child instanceof InstancedMesh)&&child.geometry===this.cube&&child.material instanceof MeshLambertMaterial&&!child.material.transparent){
       const list=batches.get(child.material)??[];list.push(child);batches.set(child.material,list);
     }
     for(const [material,meshes]of batches){if(meshes.length<2)continue;const batch=new InstancedMesh(this.cube,material,meshes.length);

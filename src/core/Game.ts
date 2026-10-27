@@ -1,4 +1,7 @@
-import { Vector3, WebGLRenderer } from 'three';
+import {settings} from '../systems/SettingsStore';
+import {VisualPreferences} from '../systems/VisualPreferences';
+import {PerformanceMonitor} from '../systems/PerformanceMonitor';
+import { BufferGeometry, Material, Texture, Vector3, WebGLRenderer } from 'three';
 import { GameLoop } from './GameLoop';
 import { SceneManager } from './SceneManager';
 import { InputManager } from '../input/InputManager';
@@ -12,6 +15,9 @@ import { CreatureEncounter } from '../creature/CreatureEncounter';
 import { ChapterOne } from '../story/ChapterOne';
 import { AudioManager } from '../audio/AudioManager';
 export class Game {
+  private readonly abort=new AbortController();private disposed=false;
+  onReset:()=>void=()=>location.reload();
+  private readonly visuals:VisualPreferences;private readonly performance:PerformanceMonitor;
   private readonly audio=new AudioManager();
   private readonly lastPosition=new Vector3();
   private readonly renderer = new WebGLRenderer({antialias:false,powerPreference:'high-performance'});
@@ -34,11 +40,11 @@ export class Game {
   private messageTimer=0;
   private readonly direction=new Vector3();
   constructor(private readonly root: HTMLElement) {
-    this.renderer.domElement.className='game-canvas';root.append(this.renderer.domElement);
+    this.renderer.domElement.className='game-canvas';root.append(this.renderer.domElement);this.visuals=new VisualPreferences(root);this.performance=new PerformanceMonitor(root);root.classList.add('overlay-open');
     this.graphics=new GraphicsSettings(this.renderer);this.graphics.resize();
     this.input=new InputManager(this.renderer.domElement);
     this.player=new PlayerController(new CameraController(this.world.camera),this.world.collisions);
-    this.hud.className='hud';this.hud.innerHTML='<div class="hud-top"><span>BR-319 <small>AMAZONAS · 2004</small></span><span class="live">● RAIMUNDO PINHEIRO</span></div><span class="crosshair">+</span><div class="hud-bottom"><span>05 <small>EXPLORAÇÃO</small></span><span class="lamp-status"></span></div>';
+    this.hud.className='hud';this.hud.innerHTML='<div class="hud-top"><span>BR-319 <small>AMAZONAS · 2004</small></span><span class="live">● RAIMUNDO PINHEIRO</span></div><span class="crosshair">+</span><div class="hud-bottom"><span>06 <small>EXPLORAÇÃO</small></span><span class="lamp-status"></span></div>';
     root.append(this.hud);this.toast.className='toast';this.toast.setAttribute('role','status');root.append(this.toast);this.prompt.className='interaction-prompt';root.append(this.prompt);
     this.mobile=new MobileControls(root,this.input);
     this.chapter=new ChapterOne(this.world.environment,root,this.graphics,text=>this.message(text));
@@ -54,8 +60,8 @@ export class Game {
     this.chapter.onClose=()=>{this.input.reset();if(!this.paused&&!this.isTouch()&&!this.chapter.dialogue.active)this.lockPointer();};
     this.menu=new MainMenu(root,this.graphics,()=>this.resume());
     this.menu.hasSave=this.chapter.saves.load()!==null;this.menu.typewriter=this.chapter.typewriter;
-    this.menu.onTypewriter=enabled=>{this.chapter.dialogue.typewriter=enabled;this.chapter.persist();};
-    this.menu.onNewGame=()=>{if(this.chapter.saves.clear()&&this.creature.checkpoint.clear()&&this.campaign.saves.clear())location.reload();else this.message('Não foi possível remover o save.');};this.menu.refresh();
+    this.menu.onTypewriter=enabled=>{this.chapter.dialogue.typewriter=enabled;};
+    this.menu.onNewGame=()=>{if(this.chapter.saves.clear()&&this.creature.checkpoint.clear()&&this.campaign.saves.clear())this.onReset();else this.message('Não foi possível remover o save.');};this.menu.refresh();
     const rotate=document.createElement('div');rotate.className='rotate-screen';rotate.innerHTML='<span>↻</span><h2>Gire o aparelho</h2><p>A floresta espera.<br>Jogue com o celular na horizontal.</p>';root.append(rotate);
     this.input.onAction=action=>{
       if(action==='pause'){if(this.chapter.ui.modal!==null&&!this.paused){this.chapter.ui.close();return;}if(this.started){if(this.paused)this.resume();else this.pause();}return;}
@@ -64,12 +70,12 @@ export class Game {
       if(action==='flashlight'&&!this.chapter.blocking)this.chapter.onFlashlight();
       if(action==='interact'){if(this.campaign.cutscene.active)this.campaign.cutscene.skip();else this.chapter.interact();}
     };
-    document.addEventListener('pointerlockchange',()=>{if(this.started&&!this.paused&&!this.chapter.blocking&&!document.pointerLockElement&&!this.isTouch())this.pause();});
-    this.renderer.domElement.addEventListener('click',()=>{if(!this.paused&&!this.isTouch())this.lockPointer();});
-    window.addEventListener('blur',()=>this.pause());
-    document.addEventListener('visibilitychange',()=>{if(document.hidden)this.pause();});
-    window.addEventListener('resize',()=>{this.resize();if(this.isTouch()&&innerHeight>innerWidth)this.pause();});
-    this.renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();this.pause();this.loop.stop();this.message('A conexão gráfica foi interrompida. Recarregue a página.');});
+    document.addEventListener('pointerlockchange',()=>{if(this.started&&!this.paused&&!this.chapter.blocking&&!document.pointerLockElement&&!this.isTouch())this.pause();},{signal:this.abort.signal});
+    this.renderer.domElement.addEventListener('click',()=>{if(!this.paused&&!this.isTouch())this.lockPointer();},{signal:this.abort.signal});
+    window.addEventListener('blur',()=>this.pause(),{signal:this.abort.signal});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)this.pause();},{signal:this.abort.signal});
+    window.addEventListener('resize',()=>{this.resize();if(this.isTouch()&&innerHeight>innerWidth)this.pause();},{signal:this.abort.signal});
+    this.renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();this.pause();this.loop.stop();this.message('A conexão gráfica foi interrompida. Recarregue a página.');},{signal:this.abort.signal});
     this.loop=new GameLoop((dt,rawDt)=>{
       if(!this.paused){
         this.world.camera.rotation.x-=this.shakeX;this.world.camera.rotation.z-=this.shakeZ;this.shakeX=this.shakeZ=0;
@@ -85,20 +91,28 @@ export class Game {
         }
         this.campaign.update(dt,this.player.position,this.direction,this.world.flashlight.visible);
         this.chapter.externalBlock=this.creature.blocking||this.campaign.blocking;
-        this.effectTime+=dt;this.shakeX=Math.sin(this.effectTime*28)*this.creature.shake;this.shakeZ=Math.sin(this.effectTime*33)*this.creature.shake*.6;
+        this.effectTime+=dt;this.shakeX=Math.sin(this.effectTime*28)*this.creature.shake*settings.value.shake;this.shakeZ=Math.sin(this.effectTime*33)*this.creature.shake*.6*settings.value.shake;
         this.world.camera.rotation.x+=this.shakeX;this.world.camera.rotation.z+=this.shakeZ;
         this.mobile.show(!this.chapter.blocking);
         this.audio.update(this.player.position.x,this.player.position.z,this.lastPosition.distanceToSquared(this.player.position)>.000001);
         this.graphics.sample(rawDt);this.world.camera.getWorldDirection(this.direction);
         this.prompt.textContent=this.chapter.prompt;
       }
+      root.classList.toggle('overlay-open',this.paused||this.chapter.ui.modal!==null);
       if(this.world.camera.far!==this.graphics.renderDistance){this.world.camera.far=this.graphics.renderDistance;this.world.camera.updateProjectionMatrix();}
       if(!this.paused)this.campaign.cutscene.update(Math.min(rawDt,.05),this.world.camera);
-      this.renderer.render(this.world.scene,this.world.camera);
+      this.renderer.render(this.world.scene,this.world.camera);this.performance.sample(rawDt,this.renderer);
     });
     this.updateLamp();this.loop.start();
-    window.addEventListener('pagehide',()=>{this.audio.pause();});
-    window.addEventListener('pageshow',()=>{if(!this.paused)this.audio.resume();});
+    window.addEventListener('pagehide',event=>{if(event.persisted)this.pause();else this.dispose();},{signal:this.abort.signal});
+    window.addEventListener('pageshow',()=>{if(!this.paused)this.audio.resume();},{signal:this.abort.signal});
+  }
+  start():void {this.resume();}
+  dispose():void {
+    if(this.disposed)return;if(this.started)this.pause();this.disposed=true;this.abort.abort();this.loop.stop();clearTimeout(this.messageTimer);this.input.dispose();this.graphics.dispose();this.visuals.dispose();this.performance.dispose();
+    const geometries=new Set<BufferGeometry>(),materials=new Set<Material>(),textures=new Set<Texture>();
+    this.world.scene.traverse(object=>{if('geometry'in object&&object.geometry instanceof BufferGeometry)geometries.add(object.geometry);if('material'in object){const list=Array.isArray(object.material)?object.material:[object.material];for(const material of list)if(material instanceof Material){materials.add(material);for(const value of Object.values(material))if(value instanceof Texture)textures.add(value);}}});
+    this.creature.dispose();this.chapter.dispose();this.audio.dispose();this.world.environment.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());this.world.flashlight.dispose();this.renderer.dispose();this.renderer.forceContextLoss();this.world.scene.clear();
   }
   private isTouch(): boolean {return matchMedia('(pointer: coarse)').matches;}
   private lockPointer(): void {

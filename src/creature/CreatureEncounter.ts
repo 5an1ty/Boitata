@@ -1,3 +1,4 @@
+import {settings} from '../systems/SettingsStore';
 import {Group,Mesh,MeshLambertMaterial,BoxGeometry,Vector3,type Box3} from 'three';
 import type {GameWorld} from '../world/GameWorld';
 import {BoitataAI,type AIState,type CreatureStimulus} from './BoitataAI';
@@ -42,7 +43,7 @@ export class CreatureEncounter {
   this.time+=dt;this.cooldown=Math.max(0,this.cooldown-dt);this.overlay.style.visibility='';
   if(!input.narrativeReady){this.model.hide();this.audio.pause();this.cue.hidden=true;return;}
   if(this.checkpoint.warning&&!this.checkpointWarning){this.checkpointWarning=true;this.notify(this.checkpoint.warning);}
-  if(this.blocking){this.captureTime+=dt;this.overlay.hidden=false;this.overlay.style.setProperty('--capture-time',String(this.captureTime));this.overlay.style.background=this.captureTime<1.2?`rgba(255,119,20,${Math.min(.9,this.captureTime*1.5)})`:`rgba(0,0,0,${Math.min(1,(this.captureTime-1.2)/1.2)})`;
+  if(this.blocking){this.captureTime+=dt;this.overlay.hidden=false;this.overlay.style.setProperty('--capture-time',String(this.captureTime));this.overlay.style.background=this.captureTime<1.2?`rgba(255,119,20,${Math.min(settings.value.reduceFlashes?.16:.9,this.captureTime*1.5)})`:`rgba(0,0,0,${Math.min(1,(this.captureTime-1.2)/1.2)})`;
    if(this.captureTime>3.3){this.captureTime=-1;this.overlay.hidden=true;this.ai.transition('DORMANT');this.ai.suspicion=0;this.cooldown=20;this.model.hide();this.audio.reset();this.audio.pause();this.onRespawn(this.checkpoint.position);this.notify('Raimundo desperta no último checkpoint. A lanterna foi apagada.');}return;
   }
   if(!this.peaceful&&!this.debugOverride&&!this.appearance&&this.ai.state==='DORMANT'&&this.cooldown<=0){

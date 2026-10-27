@@ -1,3 +1,4 @@
+import {settings} from '../systems/SettingsStore';
 import {Vector3,type Mesh} from 'three';
 import {ENDING,INTRO,ITEMS,PUZZLE,type ItemId} from '../data/chapter1';
 import type {GameWorld} from '../world/GameWorld';
@@ -65,6 +66,7 @@ export class ChapterOne {
   if(this.puzzles.has('generator'))world.powerTarget=1;
   if(this.horror.executed.has('blackout')){world.powerTarget=0;world.blackoutTime=10;}
  }
+ dispose():void {this.effects.dispose();this.interaction.dispose();this.dialogue.dispose();this.sounds.dispose();}
  get blocking():boolean{return this.externalBlock||this.dialogue.active||this.ui.modal!==null;}
  get typewriter():boolean{return this.dialogue.typewriter;}
  start():void {
@@ -134,6 +136,6 @@ export class ChapterOne {
   const data=this.saves.load();if(!data)return;
   this.chapter=data.chapter;this.inventory.items.clear();for(const [id,state]of Object.entries(data.items))this.inventory.items.set(id as ItemId,state!);
   data.objectives.forEach(id=>this.objectives.complete(id));data.unlocked.forEach(id=>this.unlocked.add(id));data.puzzles.forEach(id=>this.puzzles.add(id));data.events.forEach(id=>this.horror.executed.add(id));data.flags.forEach(id=>this.flags.add(id));
-  this.graphics.set(data.settings.quality);this.graphics.setDistance(data.settings.distance);this.graphics.adaptive=data.settings.adaptive;this.dialogue.typewriter=data.settings.typewriter;
+  settings.migrate({quality:data.settings.quality,resolution:{Baixo:.35,Médio:.5,Alto:.75}[data.settings.quality],distance:data.settings.distance as 28|48|72,adaptive:data.settings.adaptive,typewriter:data.settings.typewriter});this.graphics.resize();
  }
 }

@@ -1,3 +1,4 @@
+import {settings} from '../systems/SettingsStore';
 import { Group, InstancedMesh, Material, MeshBasicMaterial, PointLight, Vector3, type Scene } from 'three';
 import type { CollisionSystem } from '../systems/CollisionSystem';
 import { WorldAssets } from './WorldAssets';
@@ -53,9 +54,10 @@ export class GameWorld {
     this.time+=dt;this.forest.update(player,distance);this.atmosphere.update(dt,player,this.time);
     this.powerLevel += Math.sign(this.powerTarget-this.powerLevel)*Math.min(Math.abs(this.powerTarget-this.powerLevel),dt*.18);
     if(this.blackoutTime>=0)this.blackoutTime+=dt;
-    this.station.lights[0].intensity=32+Math.sin(this.time*7)*1.5;
-    this.station.lights[1].intensity=Math.sin(this.time*2.7)>.96?4:27+Math.sin(this.time*3)*1.5;
-    this.beacon.intensity=(5+Math.sin(this.time*.8)*2)*(1+this.creatureThreat*Math.sin(this.time*12)*.4);
+    const flicker=settings.value.reduceFlashes?0:settings.value.flicker;
+    this.station.lights[0].intensity=32+Math.sin(this.time*7)*1.5*flicker;
+    this.station.lights[1].intensity=27+(Math.sin(this.time*2.7)>.96?-23:Math.sin(this.time*3)*1.5)*flicker;
+    this.beacon.intensity=(5+Math.sin(this.time*.8)*2)*(1+this.creatureThreat*Math.sin(this.time*12)*.4*flicker);
     this.station.lights.forEach((light,i)=>{const blackout=this.blackoutTime<0?1:Math.max(0,1-Math.max(0,this.blackoutTime-i*1.4)/2);light.intensity*=this.powerLevel*blackout;});
   }
   dispose():void {

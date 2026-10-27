@@ -1,6 +1,12 @@
 # BOITATÁ: A Última Luz da BR-319
 
-**Etapa 5/6 — Campanha com quatro capítulos e três finais.** Protagonista: **Raimundo Pinheiro**. Noite chuvosa de 2004 em um trecho **fictício** da BR-319 ao sul de Manaus. Não é uma reprodução geográfica. Capítulo 1 preservado, investigação da instalação, retorno ao posto e três desfechos jogáveis.
+**Versão web 1.0.0 — Etapa 6/6.** Protagonista: **Raimundo Pinheiro**. Noite chuvosa de 2004 em um trecho **fictício** da BR-319 ao sul de Manaus. Não é uma reprodução geográfica. Capítulo 1 preservado, investigação da instalação, retorno ao posto e três desfechos jogáveis.
+
+## Tecnologias e dependências
+
+- Runtime: **Three.js**, TypeScript, WebGL2, HTML5, CSS3, Web Audio e LocalStorage. Sem React ou framework de jogos.
+- Ferramentas: Vite, TypeScript e `@types/three`. `playwright-core` apenas para testes, usando Chromium instalado.
+- Dependências exatas em `package-lock.json`. Fonte VT323 local, com licença SIL OFL em `public/fonts/OFL.txt`; favicon, modelos e texturas produzidos no projeto. Nenhum asset comercial foi acrescentado.
 
 ## Executar
 
@@ -75,7 +81,7 @@ Movimento e câmera funcionam simultaneamente por Pointer Events independentes. 
 ## Renderização e desempenho
 
 - Three.js/WebGL, low-poly, texturas nearest, fonte VT323 local (licença em `public/fonts/OFL.txt`), resolução interna reduzida e scanlines.
-- Qualidade Baixo/Médio/Alto: 35%/50%/75% da resolução CSS; adaptação entre 60% e 100% do nível. A medição adaptativa usa o tempo real do frame, enquanto a física limita delta a 50 ms.
+- Qualidade Baixo/Médio/Alto: valores iniciais de 35%/50%/75% da resolução CSS, com ajuste manual de 25% a 100%; adaptação entre 60% e 100% do valor escolhido. A medição adaptativa usa o tempo real do frame, enquanto a física limita delta a 50 ms.
 - Visibilidade configurável: 28, 48 ou 72 metros nas configurações.
 - Vegetação procedural determinística em setores de 20 m: árvores, palmeiras, raízes, cipós e arbustos em `InstancedMesh`, com escala, rotação e cores variáveis. Os corredores e clareira são reservados antes da geração.
 - Setores próximos são criados antes do deslocamento; os distantes removem colisores e buffers de instância. Geometrias e materiais compartilhados são preservados até o descarte do mundo.
@@ -100,6 +106,8 @@ npm run test:browser
 npm run test:chapter
 npm run test:creature
 npm run test:campaign
+npm run test:preferences
+npm run test:release
 ```
 
 Requer Chromium instalado. Caminho padrão `/usr/bin/chromium`; defina `CHROMIUM_PATH` para outro executável e `GAME_URL` para outro servidor. O teste usa `playwright-core`, sem baixar navegadores automaticamente.
@@ -241,4 +249,81 @@ Carregar restaura inventário, progresso, disponibilidade das provas, objetivo, 
 
 `npm run test:campaign` cobre Capítulos 2–4 por trajetos com colisões e raycasts, usando caminhada de 2,7 m/s na simulação; ordem dos objetivos, erros e acerto do transmissor, três provas persistentes, relés, três finais, recuperação do checkpoint, retorno ao menu e reload. Também carrega um final no viewport mobile e testa toque, menu, repetição, inventário e retorno ao joystick. `test:chapter` cobre o percurso completo do Capítulo 1; `test:creature` cobre perseguição/captura e estados; `test:browser` conserva as regressões de cenário e controles.
 
-Módulos novos: `campaign/ChapterManager.ts`, `CampaignManager.ts`, `CampaignSave.ts`, `CampaignWorld.ts`, `CutsceneManager.ts`, `data/campaign.ts` e `tests/campaign.mjs`. Todos os sistemas anteriores são reutilizados. A Etapa 6 não foi implementada. Duração e desempenho em celulares físicos continuam pendentes de playtest.
+Módulos novos: `campaign/ChapterManager.ts`, `CampaignManager.ts`, `CampaignSave.ts`, `CampaignWorld.ts`, `CutsceneManager.ts`, `data/campaign.ts` e `tests/campaign.mjs`. Todos os sistemas anteriores são reutilizados. A Etapa 6 acrescenta preferências, acessibilidade, revisão de recursos e empacotamento estático. Duração e desempenho em celulares físicos continuam pendentes de playtest.
+
+## Etapa 6 — Configuração, acessibilidade e publicação
+
+### Menu e preferências
+
+O menu inicial oferece **Novo jogo, Continuar, Configurações e Créditos**. Continuar fica desabilitado se o save do capítulo não for válido. Nova partida confirma o apagamento de progresso existente, preserva as preferências e recria a cena após liberar os recursos anteriores. Em pausa, Retomar substitui Continuar.
+
+Preferências versionadas em **`boitata-settings-v1`**, independentes da campanha e com validação de tipos/limites:
+
+| Grupo | Controles reais |
+| --- | --- |
+| Gráficos | Baixo/Médio/Alto, resolução interna, adaptação, distância de visão, efeito PSX, dithering e tremulação |
+| Áudio | Volume geral, música e efeitos, aplicados aos buses de Web Audio e às fontes HTMLAudio |
+| Jogabilidade | Sensibilidade de mouse/toque, inversão vertical, tamanho dos controles e intensidade do tremor |
+| Acessibilidade | Legendas sempre ativas, digitação opcional, redução de tremor e de flashes, indicadores visuais e volume |
+
+A redução de flashes suaviza captura alaranjada, oscilação das luzes, interferência da TV e efeitos CSS. A preferência de redução de movimento do sistema ativa valores conservadores na primeira visita. Ajustar configurações não cria uma partida salva. Saves antigos fornecem valores iniciais apenas quando não há preferências independentes.
+
+Os controles mobile foram verificados em viewports **16:9, 19.5:9 e 20:9**, incluindo tamanho máximo, joystick, câmera com segundo dedo, cancelamento, inventário, legendas, orientação vertical e menus. Apenas os painéis rolam por toque; a página e a área de jogo não rolam. Isso não substitui aparelhos físicos.
+
+### Desempenho e limpeza
+
+Pixel ratio limitado a 1, resolução adaptativa, chuva limitada a 700 segmentos, vegetação e objetos estáticos instanciados, materiais/geometrias compartilhados e streaming por setores foram mantidos. Uma luz representa toda a criatura; não existem sombras dinâmicas por segmento. O build separa Three.js do código da aplicação para cache e evita o aviso de chunk único acima de 500 kB.
+
+`?fps` no servidor de desenvolvimento mostra FPS, maior tempo de frame, chamadas e triângulos. `?aiDebug` mantém o laboratório da IA. Ambos ficam ausentes no build de produção. Metas: **30 FPS mobile / 60 FPS desktop**, sem garantia universal.
+
+Reiniciar interrompe o loop, aborta listeners, remove assinaturas das preferências, fecha contextos de áudio, descarta geometria/texturas/materiais/buffers e libera o contexto WebGL. O teste de preferências verifica assinaturas estáveis após três reinícios; o de produção verifica a perda controlada do contexto antigo e a presença de apenas um canvas novo.
+
+### Build e preview
+
+```sh
+npm install
+npm run build
+npm run preview
+```
+
+O artefato está em **`dist/`**. O preview é uma verificação local, não uma publicação. Se a porta estiver ocupada, use `npm run preview -- --port 4173 --strictPort` e encerre o servidor anterior que você iniciou.
+
+`vite.config.ts` usa `base: './'`: assets funcionam na raiz ou numa subpasta como `/Boitata/`. `test:release` serve o próprio `dist/` nessa subpasta e verifica chunks, fonte, favicon, preferências, três finais a partir do checkpoint e responsividade. Não serve arquivos TypeScript de desenvolvimento.
+
+### Deploy estático — escolher uma opção
+
+**Nenhum deploy público foi executado nesta entrega.** O repositório possui configuração para estas opções:
+
+- **Vercel:** importe o repositório, use Vite, comando `npm run build` e saída `dist`. `vercel.json` registra esses valores. Use Node 22.12+ ou 24.
+- **Netlify:** conecte o repositório; `netlify.toml` define build e publicação de `dist`, com Node 22.
+- **GitHub Pages:** em Settings → Pages, selecione GitHub Actions. Em Actions, execute manualmente **Publicar GitHub Pages manualmente** (`.github/workflows/pages.yml`). O workflow instala via `npm ci`, compila e publica o artefato Pages. Ele **não** é disparado por push. A URL só existe depois de a publicação efetivamente concluir.
+- **Outro servidor:** envie o conteúdo de `dist/` mantendo a estrutura de pastas, sirva `index.html` e os MIME types de JS/CSS/fontes corretamente, preferencialmente com HTTPS.
+
+Não há backend, variáveis secretas ou rotas de SPA para reescrever. Saves são locais ao navegador e à origem: o progresso de desenvolvimento não migra automaticamente para um domínio de produção. Use cache curto para `index.html` e cache longo para assets com hash; não configure cache imutável do HTML.
+
+### Estrutura principal
+
+```text
+src/core/          loop, renderer e integração
+src/input/         teclado, mouse, joystick e Pointer Events
+src/player/        câmera, movimento, gravidade e colisão
+src/world/         posto, estrada, floresta, chuva e recursos
+src/story/         Capítulo 1, diálogos, inventário, interação e save
+src/campaign/      capítulos 2–4, puzzles, checkpoints e finais
+src/creature/      modelo procedural, navegação, percepção e IA
+src/systems/       colisões, preferências, gráficos, efeitos e FPS
+src/audio/         Web Audio espacial, buses e infraestrutura de assets
+src/ui/            menu, configurações, HUD, touch e painéis
+src/data/          narrativa e condições dos puzzles
+public/            fonte licenciada e favicon
+tests/            regressão funcional, campanha e produção
+```
+
+### Limites da entrega
+
+- Chuva visual está implementada; **gravações de chuva, vento, insetos, passos e rádio ambiente ainda precisam ser produzidas/licenciadas**. Não há dublagem. `AudioManager.ts` e `AUDIO_ASSETS` documentam a integração; arquivos futuros devem usar `import.meta.env.BASE_URL` ao montar URLs públicas para manter compatibilidade com subpastas. Os efeitos existentes e o pulso musical são sintetizados.
+- Duração de 30–45 min e metas de FPS exigem playtest humano e dispositivos reais; não foram certificados.
+- Chromium automatizado não é Safari/iOS real. Navegadores precisam de WebGL2 e suporte atual a Pointer Events/Web Audio; falha de WebGL recebe mensagem de erro e opção de tentar novamente.
+- O pacote está preparado para hospedagem estática; **publicação, DNS e validação do site publicado não foram realizados**.
+
+Resultados e comandos de validação ficam em [docs/RELEASE.md](docs/RELEASE.md). A campanha e os três finais são funcionais nos testes; a produção de áudio restante e a homologação em hardware real continuam abertas.
