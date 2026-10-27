@@ -69,6 +69,7 @@ Use **Continuar jogo** para retomar. A posição volta à chegada e portas físi
 | Ação | Computador | Celular |
 | --- | --- | --- |
 | Mover | WASD | Joystick esquerdo |
+| Pular | Espaço | — |
 | Olhar | Mouse capturado após iniciar | Arrastar à direita |
 | Correr | Segurar Shift | Segurar CORRER |
 | Interagir/portas/avançar fala | E, próximo e olhando para o objeto | Botão E / Avançar |

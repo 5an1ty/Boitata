@@ -23,7 +23,10 @@ export class GasStation {
     // Convenience store x=-2..22, z=-20..-10. All rear rooms have doors.
     b(10,1.6,-26,24,3.2,.25,0x5d6859);b(-2,1.6,-18,.25,3.2,16,0x687260);b(22,1.6,-18,.25,3.2,16,0x687260);
     b(2,1.6,-10,8,3.2,.25,0x6f7764);b(15,1.6,-10,14,3.2,.25,0x6f7764);b(7,2.95,-10,2,.5,.25,0x6f7764);
-    b(10,3.3,-18,24.5,.25,16.5,0x2b3d32);label('CONVENIÊNCIA · 24 HORAS',10,2.7,-9.84,9);
+    b(10,3.3,-18,24.5,.25,16.5,0x2b3d32);// Freestanding sign beside the shop, clear of the entrance and facade windows.
+    b(24,1.15,-2.8,.16,2.3,.16,0x737057);
+    b(24,2.55,-2.8,3.9,1,.12,0x5c634b);
+    label('CONVENIÊNCIA · 24 HORAS',24,2.55,-2.72,3.8);
     this.door(a,7,-10,'PORTA DE VIDRO',true,2);
     // Rear wall split around four doorways, with a wide central shop aisle.
     for(const [cx,name] of [[1,'BANHEIRO'],[7,'DEPÓSITO'],[13,'OFICINA'],[19,'SALA ELÉTRICA']] as const){
