@@ -12,9 +12,9 @@ try {
    function go(x,z){const steps=Math.ceil(Math.hypot(x-p.x,z-p.z)/.09);for(let i=0;i<steps;i++){world.forest.update(p,28);collisions.move(p,(x-p.x)/(steps-i),(z-p.z)/(steps-i));}if(Math.hypot(x-p.x,z-p.z)>.05)throw new Error(`Rota bloqueada: destino ${x},${z}; posição ${p.x},${p.z}`);}
    go(5,13);go(5,-8);go(7,-8);
    const entrance=world.station.doors[0];collisions.move(p,0,-4);if(p.z<-9.65)throw new Error('Porta fechada atravessada');p.set(7,1.65,-8);entrance.use(p);go(7,-12);go(7,-19);
-   for(const [i,x]of [1,7,13,19].entries()){
-     go(x,-19);world.station.doors[i+1].use(p);go(x,-23);go(x,-19);
-   }
+   go(5,-19);world.station.doors[1].use(p);go(2.5,-19);go(1,-23);go(2.5,-19);go(5,-19);go(7,-19);
+   for(const [i,x]of [[2,7],[3,13]]){go(x,-19);world.station.doors[i].use(p);go(x,-23);go(x,-19);}
+   go(14.5,-19);go(14.5,-18);world.station.doors[4].use(p);go(18,-18);go(19,-23);go(18,-18);go(14.5,-18);go(14.5,-19);
    go(7,-19);go(7,-8);entrance.use(p);if(entrance.open)throw new Error('Porta não fechou');
    go(5,-8);go(5,13);go(-12,13);go(0,13);go(0,39);go(18,39);go(18,42);
    const gate=world.station.doors.at(-1);const gateBlocked=collisions.blocked(new Vector3(25,1.65,0),.28);gate.use(new Vector3(25,1.65,2));if(!gateBlocked||collisions.blocked(new Vector3(25,1.65,0),.28))throw new Error('Estado do portão incorreto');

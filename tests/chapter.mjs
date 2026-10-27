@@ -17,7 +17,7 @@ try {
   const depot=world.station.doors[2];if(!depot.use(new Vector3(7,1.65,-19)).includes('Trancado')||depot.open)throw new Error('Depósito sem trava');
   if(chapter.interaction.find(new Vector3(10,1.65,-28),new Vector3(0,0,1)))throw new Error('Interação atravessa parede');
   go(5,-8);go(7,-8);interact(7,1.4,-10,'VIDRO');go(7,-10.8);go(17.8,-10.8);interact(17.8,1.45,-11.3,'BALCÃO');go(15.8,-10.8);interact(15.8,1,-11.3,'GAVETA');interact(15.8,1.45,-11.12,'Chave'.toUpperCase());
-  go(19.5,-10.8);interact(19.5,1.5,-11.3,'FITA');go(7,-10.8);go(7,-19);interact(7,1.4,-20,'DEPÓSITO');go(7,-22);interact(7,1.05,-24,'FUSÍVEL');interact(5.5,1.5,-22,'FOTOGRAFIAS');go(7,-19);go(19,-19);interact(19,1.4,-20,'ELÉTRICA');go(19,-21);interact(19,1.4,-22,'ANOTAÇÃO');go(20,-21);go(20,-22.7);go(18,-22.7);go(18,-23.5);interact(17.4,1.2,-24,'REGISTRO');go(18,-22.7);go(20,-22.7);go(20,-21);go(19,-21);go(19,-19);go(7,-19);go(7,-8);go(23,-8);go(23,-13);go(25,-13);go(25,-14.5);
+  go(19.5,-10.8);interact(19.5,1.5,-11.3,'FITA');go(7,-10.8);go(7,-19);interact(7,1.4,-20,'DEPÓSITO');go(7,-22);interact(7,1.05,-24,'FUSÍVEL');interact(5.5,1.5,-22,'FOTOGRAFIAS');go(7,-19);go(14.5,-19);go(14.5,-18);interact(16,1.4,-18,'ELÉTRICA');go(18,-18);go(19,-21);interact(19,1.4,-22,'ANOTAÇÃO');go(20,-21);go(20,-22.7);go(18,-22.7);go(18,-23.5);interact(17.4,1.2,-24,'REGISTRO');go(18,-22.7);go(20,-22.7);go(20,-21);go(19,-21);go(18,-18);go(14.5,-18);go(14.5,-19);go(7,-19);go(7,-8);go(23,-8);go(23,-13);go(25,-13);go(25,-14.5);
   interact(25,1.4,-16.4,'GERADOR');
   globalThis.chapterFixture={chapter,world,p,direction,tick,go,interact,messages,SaveManager,validateSave,renderer,graphics};
   return {beforePuzzle:chapter.objectives.completed,inventory:[...chapter.inventory.items.keys()]};

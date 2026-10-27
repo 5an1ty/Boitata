@@ -1,4 +1,4 @@
-import {BoxGeometry, BufferGeometry, CircleGeometry, CylinderGeometry, Group, InstancedMesh, Mesh, MeshLambertMaterial, Quaternion, Vector3} from 'three';
+import {BoxGeometry, BufferGeometry, CircleGeometry, LatheGeometry, TorusGeometry, Vector2, CylinderGeometry, Group, InstancedMesh, Mesh, MeshLambertMaterial, Quaternion, Vector3} from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import type {WorldAssets} from './WorldAssets';
 import type {WorldDoor} from './WorldInteraction';
@@ -22,7 +22,7 @@ export class StationVisuals {
       if(s.x>7||s.y>3)kind='concrete';
       if([0x706746,0x736744,0x615b40,0x62674c,0x6a6247].includes(color))kind='wood';
       if([0x35584b,0x263e39,0x47685f,0x617b71].includes(color))kind='glass';
-      if([0xb4b9a2,0xa4ad95].includes(color))kind='tile';
+      if([0xb4b9a2,0xa4ad95].includes(color))kind='ceramic';
       if([0x19241e,0x1f2923,0x161f1b].includes(color))kind='rubber';
       if([0x586449,0x3f5148,0xa9b4a2,0x414c44,0x2b3d32].includes(color))kind='metal';
       const material=this.materials.get(kind,color);
@@ -36,6 +36,13 @@ export class StationVisuals {
       if(o.position.y===1.5&&(o.position.x===17||o.position.x===-5)&&s.z===1.9){
         const positions=geometry.getAttribute('position');for(let i=0;i<positions.count;i++)if(positions.getY(i)>0){positions.setX(i,positions.getX(i)*.82);positions.setZ(i,positions.getZ(i)*.62);}geometry.computeVertexNormals();
       }
+      if(color===0xb4b9a2&&o.position.y===.35){
+        const bowl=new LatheGeometry([[.22,0],[.25,.07],[.16,.22],[.2,.35],[.35,.48],[.39,.61],[.36,.66],[.28,.62],[.18,.43],[0,.4]].map(([x,y])=>new Vector2(x,y)),12);
+        this.geometries.add(bowl);o.geometry=bowl;o.position.y=.06;o.scale.set(1,1,1.2);
+      }else if(color===0xb4b9a2){o.position.y=1.02;o.scale.set(.67,.6,.25);}
+      if(color===0xa4ad95){o.position.y=.47;o.scale.set(.27,.85,.27);}
+      // The collision envelope stays conservative, but the rack is open shelving.
+      if(color===0x535d44&&o.position.y===.9){o.scale.z=.06;o.position.z-=.32;}
       // Wheel and workshop tire silhouettes, with identical collision footprints.
       if(color===0x19241e){o.geometry=this.cylinder;o.scale.set(.425,.35,.425);o.rotation.z=Math.PI/2;}
       if(color===0x1f2923){o.geometry=this.cylinder;o.scale.set(.5,.3,.5);}
@@ -71,30 +78,52 @@ export class StationVisuals {
       for(const y of [.88,2.52])box(x,y,-9.77,4,.09,.1);
       box(x,.78,-9.76,4.1,.15,.25,'concrete',0x777e6e);
     }
-    for(const door of doors){const width=door.blocker.max.x-door.blocker.min.x;
+    for(const door of doors){const width=door.width;
       for(const x of [.035,width-.035])box(x,1.3,.08,.07,2.6,.05,'metal',0x697368,door.pivot);
       for(const y of [.07,2.53])box(width/2,y,.08,width,.1,.05,'metal',0x697368,door.pivot);
       pipe([width-.18,1.05,.14],[width-.18,1.4,.14],.025,0xb4ac8c,door.pivot);
     }
     // Interior: skirting, old tile floor, signage and shop fittings.
     box(10,.041,-18,23.7,.012,15.7,'tile',0x858675);
-    for(const z of [-19.86,-25.85])box(10,.18,z,23.8,.3,.045,'tile',0x737c68);
+    for(const z of [-25.85])box(10,.18,z,23.8,.3,.045,'tile',0x737c68);
     box(17,1.42,-12,6.2,.035,1.22,'metal',0x8b8b76);
-    for(const x of [1,11])for(const z of [-14,-17]){
+    for(const x of [1,11])for(const z of (x===1?[-14]:[-14,-17])){
       for(const dx of [-.98,.98])box(x+dx,.9,z+.37,.06,1.8,.06);
-      for(const y of [.6,1.2,1.7])a.label(group,'CAFÉ 1,50 · ÁGUA 1,00',x,y,z+.425,1.8,'#c7bb8a');
-      for(let i=0;i<3;i++){const bx=x-.6+i*.6;this.mesh(this.cylinder,bx,1.92,z-.15,.075,.35,.075,'glass',0x4b6543);this.mesh(this.cylinder,bx,2.13,z-.15,.035,.1,.035,'paint',0x8e8455);}
+      for(const y of [.6,1.2,1.7]){
+        const price=a.label(group,'CAFÉ 1,50 · ÁGUA 1,00',x,y,z+.425,1.75,'#c7bb8a');price.scale.y=.16;
+        for(let i=0;i<5;i++){
+          const px=x-.78+i*.39,base=y+.04,pz=z+.12;
+          if(i%3===0){
+            this.mesh(this.cylinder,px,base+.13,pz,.075,.26,.075,'glass',0x52745d);
+            this.mesh(this.bevel,px,base+.27,pz,.065,.06,.065,'glass',0x52745d);
+            this.mesh(this.cylinder,px,base+.32,pz,.03,.07,.03,'packaging',0xb7a26d);
+            this.mesh(this.cylinder,px,base+.13,pz,.077,.1,.077,'packaging',0xb6a47c);
+          }else if(i%3===1){
+            this.mesh(this.cylinder,px,base+.12,pz,.09,.24,.09,'packaging',0x9e6547);
+            this.mesh(this.cylinder,px,base+.245,pz,.085,.01,.085,'metal',0xa0a396);
+            box(px,base+.13,pz+.091,.13,.09,.007,'packaging',0xd2be93);
+          }else{
+            box(px,base+.16,pz,.21,.32,.18,'packaging',0xb9a56f);
+            this.mesh(this.bevel,px,base+.335,pz,.14,.03,.12,'packaging',0x9a874f);
+            box(px,base+.17,pz+.094,.15,.13,.006,'packaging',0x687a51);
+          }
+        }
+      }
     }
     for(const x of [18,20]){
-      box(x,2.49,-18,1.74,.12,1.04);pipe([x+.57,.9,-17.39],[x+.57,1.8,-17.39],.035);
-      for(let i=0;i<6;i++)box(x,.18+i*.065,-17.47,1.4,.025,.025,'rubber',0x29392e);
-      for(const y of [.7,1.25,1.8])box(x,y,-17.42,1.35,.03,.02);
+      box(x,2.49,-15.3,1.74,.12,1.04);pipe([x+.57,.9,-14.69],[x+.57,1.8,-14.69],.035);
+      for(let i=0;i<6;i++)box(x,.18+i*.065,-14.77,1.4,.025,.025,'rubber',0x29392e);
+      for(const y of [.7,1.25,1.8])box(x,y,-14.72,1.35,.03,.02);
     }
     a.label(group,'NOVEMBRO 2004\n21 · DOMINGO',5,2.1,-19.85,1.5,'#c7b694');
     a.label(group,'CAFÉ PASSADO\nPÃO NA CHAPA',3,2,-10.17,1.4,'#d3b77b').rotation.y=Math.PI;
     a.label(group,'FIADO SÓ AMANHÃ',17,1,-11.43,1.8);
     // Sanitary fixtures, exposed drain, stock crate battens and workshop pegboard.
-    this.mesh(this.cylinder,0,.69,-24,.38,.09,.46,'tile',0xb4b9a2);
+    const seat=new TorusGeometry(.31,.048,4,12);this.geometries.add(seat);
+    const seatMesh=this.mesh(seat,0,.74,-24,1,1.25,1,'ceramic',0xc5c4af);seatMesh.rotation.x=-Math.PI/2;
+    box(.23,1.15,-24.25,.09,.035,.06,'metal',0xa5aaa1);
+    const basin=new LatheGeometry([[.1,0],[.3,.04],[.43,.15],[.44,.24],[.36,.24],[.27,.1],[0,.07]].map(([x,y])=>new Vector2(x,y)),12);this.geometries.add(basin);
+    this.mesh(basin,2.5,.85,-24.8,1,1,.7,'ceramic',0xb9c0af);
     pipe([2.5,.9,-24.8],[2.5,.2,-24.8],.055);pipe([2.5,1.15,-25],[2.5,1.3,-25],.035);
     box(2.5,1.3,-24.9,.22,.04,.04);
     for(const z of [-22,-24.8])for(const x of [4.8,9])for(const dx of [-.43,.43])box(x+dx,.7,z+.61,.09,1.3,.04,'wood',0x97845a);

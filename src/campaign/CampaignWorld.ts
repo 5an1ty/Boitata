@@ -14,7 +14,16 @@ export class CampaignWorld {
   b(27.5,1.2,39,3,2.4,.5,0x4b5b46);label('ABRIGO / PAINEL',27.5,1.8,38.7,2.7).rotation.y=Math.PI;
   b(28,.9,36,.14,1.8,.14,0x8a8e70);label('ARQUIVOS →',28,1.8,36,3).rotation.y=Math.PI;
   for(const [id,x,y,z]of [['burnPhoto',33,1.4,45.3],['recording',39,1.4,45.3],['transport',45,1.4,45.3],['transmitterManual',26,1.4,36],['logAsh',38,1.2,51],['logFuel',28,1.2,-15],['logWitness',1.9,1.6,-24.4]] as [ItemId,number,number,number][]){
-   const mesh=a.box(new Group(),x,y,z,.4,.15,.3,id==='recording'?0x544735:0xd0c49e,false);g.add(mesh);this.pickups.set(id,mesh);
+   const mesh=a.box(new Group(),x,y,z,.4,.04,.3,id==='recording'?0x544735:0xaaa28b,false);g.add(mesh);this.pickups.set(id,mesh);
+   for(const side of [-1,1]){const cover=new Mesh(a.cube,a.material(id==='logFuel'?0x4b6352:0x68533c));cover.scale.set(1.05,.15,1.05);cover.position.y=side*.55;mesh.add(cover);}
+   // Every collectible rests on a physical surface, including the outdoor ledger.
+   const top=y-.026;
+   b(x,top-.04,z,.8,.08,.4,0x736744);
+   if(['transmitterManual','logAsh','logFuel'].includes(id)){
+     for(const dx of [-.32,.32])for(const dz of [-.12,.12])b(x+dx,(top-.08)/2,z+dz,.07,top-.08,.07,0x535c4b);
+   }else if(id==='logWitness'){
+     b(x,top-.17,z-.2,.65,.25,.08,0x535c4b);
+   }
    const pickup=register(`COLETAR ${id==='burnPhoto'?'FOTOGRAFIA DA QUEIMADA':id==='recording'?'GRAVAÇÃO':id==='transport'?'REGISTRO DE TRANSPORTE':id==='transmitterManual'?'MANUAL DO TRANSMISSOR':id==='logAsh'?'DIÁRIO DAS CINZAS':id==='logFuel'?'LIVRO DE ABASTECIMENTO':'BILHETE DA TESTEMUNHA'}`,new Vector3(x,y,z),()=>pick(id));Object.defineProperty(pickup,'enabled',{get:()=>!chapter.inventory.has(id)});
   }
   const points:[string,string,Vector3][]=[

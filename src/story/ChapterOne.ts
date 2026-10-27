@@ -51,9 +51,11 @@ export class ChapterOne {
    });item.enabled=mesh.visible;this.pickups.set(id,{mesh,object:item});
   };
   pickup('key',15.8,1.45,-11.12,0xc4b16b,()=>this.flags.has('drawer'));
-  pickup('fuse',7,1.05,-24,0xb5d0c1);a.box(g,7,.45,-24,.75,.9,.65,0x665e42);
-  pickup('note',19,1.4,-22,0xcac49d);a.box(g,19,.6,-22,.8,1.2,.6,0x5b644d);
+  pickup('fuse',7,1.05,-24,0xb5d0c1);a.box(g,7,.495,-24,.75,.99,.65,0x665e42);
+  pickup('note',19,1.4,-22,0xcac49d);a.box(g,19,.67,-22,.8,1.34,.6,0x5b644d);
   pickup('tape',19.5,1.5,-11.3,0x292f25);pickup('maintenance',17.4,1.2,-24,0xbfb89a);pickup('photos',5.5,1.5,-22,0x8b9c85);
+  a.box(g,17.4,.57,-24,.5,1.14,.55,0x736744);
+  a.box(g,5.5,1.4,-22,.65,.08,.55,0x736744);
   object('USAR RÁDIO',new Vector3(17,1.6,-11.35),()=>this.radio());
   object('ATENDER TELEFONE',new Vector3(19,1.65,-11.3),()=>{this.sounds.tone('static');this.dialogue.play([{speaker:'TELEFONE',text:'[Linha muda. Um ruído parece acompanhar a chuva.]',duration:4}]);return 'Raimundo levanta o telefone.';});
   object('EXAMINAR TELEVISÃO',new Vector3(-1,2.15,-11.5),()=>{this.effects.interfere();this.sounds.tone('static');return 'A tela do tubo só mostra interferência. A câmera de segurança fica no terminal do balcão.';});

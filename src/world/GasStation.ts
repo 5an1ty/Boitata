@@ -28,23 +28,32 @@ export class GasStation {
     b(24,2.55,-2.8,3.9,1,.12,0x5c634b);
     label('CONVENIÊNCIA · 24 HORAS',24,2.55,-2.72,3.8);
     this.door(a,7,-10,'PORTA DE VIDRO',true,2);
-    // Rear wall split around four doorways, with a wide central shop aisle.
-    for(const [cx,name] of [[1,'BANHEIRO'],[7,'DEPÓSITO'],[13,'OFICINA'],[19,'SALA ELÉTRICA']] as const){
+    // U-shaped interior: bathroom in the west wing, electrical room in the east,
+    // stockroom and workshop at the back. Keep stable door indices for saves.
+    b(1,1.6,-17,6,3.2,.2,0x5a6655);
+    b(4,1.6,-17.55,.2,3.2,1.1,0x596650);b(4,1.6,-22.95,.2,3.2,6.1,0x596650);b(4,2.95,-19,.2,.5,1.8,0x596650);
+    this.door(a,4,-19,'BANHEIRO',false,1.8,Math.PI/2);
+    const bathroomSign=label('BANHEIRO',4.15,2.82,-19,1.6);bathroomSign.rotation.y=Math.PI/2;bathroomSign.scale.y=.5;
+    for(const [cx,name]of [[7,'DEPÓSITO'],[13,'OFICINA']]as const){
       b(cx-1.95,1.6,-20,2.1,3.2,.2,0x5a6655);b(cx+1.95,1.6,-20,2.1,3.2,.2,0x5a6655);b(cx,2.95,-20,1.8,.5,.2,0x5a6655);
-      this.door(a,cx,-20,name);label(name,cx,2.72,-19.85,2.4);
+      this.door(a,cx,-20,name);label(name,cx,2.82,-19.85,1.6).scale.y=.5;
     }
-    for(const x of [4,10,16])b(x,1.6,-23,.2,3.2,6,0x596650);
+    b(10,1.6,-23,.2,3.2,6,0x596650);
+    b(19,1.6,-16,6,3.2,.2,0x5a6655);
+    b(16,1.6,-16.55,.2,3.2,1.1,0x596650);b(16,1.6,-22.45,.2,3.2,7.1,0x596650);b(16,2.95,-18,.2,.5,1.8,0x596650);
+    this.door(a,16,-18,'SALA ELÉTRICA',false,1.8,-Math.PI/2);
+    const electricSign=label('SALA ELÉTRICA',15.85,2.82,-18,1.7);electricSign.rotation.y=-Math.PI/2;electricSign.scale.y=.5;
     b(17,.65,-12,6,1.3,1.1,0x706746);b(17,1.35,-12,6.1,.12,1.2,0x394637);
     b(15,1.62,-12,.65,.45,.5,0x92967e);b(15,1.92,-12,.5,.18,.35,0x192b25,false);label('CAIXA',15,1.7,-11.72,.55);
     b(19,1.53,-12,.5,.2,.3,0x202b23,false);b(19,1.7,-12,.55,.12,.12,0x26332a,false); // phone
     for(const x of [1,11]){
-      for(const z of [-14,-17]){
+      for(const z of (x===1?[-14]:[-14,-17])){
         b(x,.9,z,2,1.8,.7,0x535d44);for(const y of [.6,1.2,1.7]){b(x,y,z,2.1,.08,.8,0xa1a080,false);
-          for(let i=0;i<5;i++)b(x-.8+i*.4,y+.18,z+.26,.22,.3,.22,[0x9a6545,0xb2ad71,0x6b8463][i%3],false);
+          // Product silhouettes are supplied by StationVisuals.
         }
       }
     }
-    for(const x of [18,20]){b(x,1.25,-18,1.7,2.5,1,0xa9b4a2);b(x,1.4,-17.46,1.45,1.9,.04,0x35584b,false);label('GELADOS',x,2.2,-17.42,1.3);}
+    for(const x of [18,20]){b(x,1.25,-15.3,1.7,2.5,1,0xa9b4a2);b(x,1.4,-14.76,1.45,1.9,.04,0x35584b,false);label('GELADOS',x,2.2,-14.72,1.3);}
     b(-1,2.15,-12,.8,.65,.6,0x454938,false);b(-1,2.15,-11.68,.65,.45,.04,0x66867c,false);label('SEM SINAL',-1,2.15,-11.64,.6);
     b(17,1.55,-12,.65,.3,.25,0x6f6950,false);label('AM 319',17,1.6,-11.84,.6);
     b(10,2.6,-19.83,.65,.65,.08,0xb9b49a,false);label('02 : 17',10,2.6,-19.77,.6);
@@ -73,7 +82,7 @@ export class GasStation {
     const back=new PointLight(0x91b4a5,18,18,2);back.position.set(13,2.6,-23);this.lights.push(back);g.add(...this.lights);
     this.visuals=new StationVisuals(g,a,this.doors);
   }
-  private door(a:WorldAssets,x:number,z:number,name:string,glass=false,width=1.8):void{const door=new WorldDoor(this.group,a,a.collisions,x,z,name,glass,width);this.doors.push(door);this.interactions.push(door);}
+  private door(a:WorldAssets,x:number,z:number,name:string,glass=false,width=1.8,yaw=0):void{const door=new WorldDoor(this.group,a,a.collisions,x,z,name,glass,width,yaw);this.doors.push(door);this.interactions.push(door);}
   vehicle(a:WorldAssets,x:number,z:number,truck:boolean):void {
     const b=a.box.bind(a,this.group),length=truck?7:4;
     b(x,.7,z,2.4,1,length,truck?0x64634a:0x75816d);b(x,1.5,z+length*.27,2.2,1.4,1.9,truck?0x786c4c:0x667a6d);
