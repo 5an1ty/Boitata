@@ -1,8 +1,10 @@
 import { Group, PointLight, Vector3 } from 'three';
+import { StationVisuals } from './StationVisuals';
 import type { WorldAssets } from './WorldAssets';
 import { WorldDoor, type WorldInteraction } from './WorldInteraction';
 export class GasStation {
   readonly group=new Group();
+  readonly visuals:StationVisuals;
   readonly doors:WorldDoor[]=[];
   readonly interactions:WorldInteraction[]=[];
   readonly lights:PointLight[]=[];
@@ -63,9 +65,10 @@ export class GasStation {
     // Closed gate has an interaction and is never a permanent campaign barrier.
     this.door(a,25,0,'PORTÃO DO PÁTIO',false,3);
     label('TRILHA → ANTENA',3,1.6,15,3);b(3,.7,15,.14,1.4,.14,0x737057);
-    const fluorescent=new PointLight(0xc7e4ce,34,24,2);fluorescent.position.set(5,3.9,1);this.lights.push(fluorescent);
-    const shop=new PointLight(0xc7d3ac,28,22,2);shop.position.set(9,2.9,-15);this.lights.push(shop);
+    const fluorescent=new PointLight(0xe5bd83,34,24,2);fluorescent.position.set(5,3.9,1);this.lights.push(fluorescent);
+    const shop=new PointLight(0xb9d8d5,28,22,2);shop.position.set(9,2.9,-15);this.lights.push(shop);
     const back=new PointLight(0x91b4a5,18,18,2);back.position.set(13,2.6,-23);this.lights.push(back);g.add(...this.lights);
+    this.visuals=new StationVisuals(g,a,this.doors);
   }
   private door(a:WorldAssets,x:number,z:number,name:string,glass=false,width=1.8):void{const door=new WorldDoor(this.group,a,a.collisions,x,z,name,glass,width);this.doors.push(door);this.interactions.push(door);}
   vehicle(a:WorldAssets,x:number,z:number,truck:boolean):void {

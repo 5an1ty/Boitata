@@ -61,7 +61,7 @@ export class GameWorld {
     this.station.lights.forEach((light,i)=>{const blackout=this.blackoutTime<0?1:Math.max(0,1-Math.max(0,this.blackoutTime-i*1.4)/2);light.intensity*=this.powerLevel*blackout;});
   }
   dispose():void {
-    this.forest.dispose();this.atmosphere.dispose();this.station.doors.forEach(d=>d.dispose());
+    this.forest.dispose();this.atmosphere.dispose();this.station.visuals.dispose();this.station.doors.forEach(d=>d.dispose());
     const materials=new Set<Material>();
     for(const group of [this.group,this.station.group])group.traverse(o=>{if(o instanceof InstancedMesh)o.dispose();if('material'in o&&o.material instanceof Material)materials.add(o.material);});materials.forEach(m=>m.dispose());
     this.assets.dispose();this.scene.remove(this.group,this.station.group);this.station.lights.forEach(l=>l.dispose());this.beacon.dispose();
