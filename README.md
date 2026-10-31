@@ -328,3 +328,9 @@ tests/            regressão funcional, campanha e produção
 - O pacote está preparado para hospedagem estática; **publicação, DNS e validação do site publicado não foram realizados**.
 
 Resultados e comandos de validação ficam em [docs/RELEASE.md](docs/RELEASE.md). A campanha e os três finais são funcionais nos testes; a produção de áudio restante e a homologação em hardware real continuam abertas.
+
+## Base gráfica Neo-PSX
+
+O acabamento agora usa pós-processamento Three.js com granulação, dithering discreto, color grading, aberração cromática, vinheta, distorção opcional, bloom e FXAA. Ajustes independentes ficam em **Configurações → Acabamento Neo-PSX**. O controle **Efeito PSX** ativa/desativa o conjunto; materiais e sombras permanecem.
+
+A biblioteca de superfícies físicas, geometria refinada e limitações estão descritas em [docs/neo-psx/IMPLEMENTATION.md](docs/neo-psx/IMPLEMENTATION.md). Sem dependências adicionais. Com `npm run dev` na porta 5173, execute `node tests/neo-psx.mjs` para validar os shaders e gerar as capturas. Valores anteriores de preferências e saves continuam compatíveis.

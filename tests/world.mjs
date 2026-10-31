@@ -28,6 +28,8 @@ try {
    times.sort((a,b)=>a-b);const metrics={medianMs:times[17],p95Ms:times[33],drawCalls:maxCalls,triangles:renderer.info.render.triangles};
    world.dispose();renderer.dispose();return {routes:'loja, quatro cômodos, rodovia, trilha e clareira',sectors:{before,after},metrics};
  });console.log(JSON.stringify(result,null,2));
+ // Release the desktop renderer before testing a second WebGL context on software GPU.
+ await page.close();
  const mobile=await browser.newContext({viewport:{width:844,height:390},isMobile:true,hasTouch:true}),mp=await mobile.newPage();mp.on('pageerror',e=>errors.push(e.message));await mp.goto(process.env.GAME_URL??'http://127.0.0.1:5173');await mp.getByRole('button',{name:/Novo jogo/}).click();await mp.locator('.subtitles').waitFor({state:'visible'});await mp.getByRole('button',{name:'Avançar · E',exact:true}).tap();for(let i=0;i<14;i++)await mp.keyboard.press('e');await mp.locator('.subtitles').waitFor({state:'hidden'});await mp.locator('.joystick').waitFor({state:'visible'});
  const cdp=await mobile.newCDPSession(mp),joy=await mp.locator('.joystick').boundingBox();
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:joy.x+joy.width/2,y:joy.y+joy.height/2,id:1},{x:550,y:130,id:2}]});

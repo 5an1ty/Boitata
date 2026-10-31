@@ -1,4 +1,4 @@
-import {BoxGeometry, BufferGeometry, CircleGeometry, LatheGeometry, TorusGeometry, Vector2, CylinderGeometry, Group, InstancedMesh, Mesh, MeshLambertMaterial, Quaternion, Vector3} from 'three';
+import {BoxGeometry, BufferGeometry, CircleGeometry, LatheGeometry, TorusGeometry, Vector2, CylinderGeometry, Group, InstancedMesh, Mesh, MeshLambertMaterial, MeshStandardMaterial, Material, Quaternion, Vector3} from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import type {WorldAssets} from './WorldAssets';
 import type {WorldDoor} from './WorldInteraction';
@@ -10,7 +10,7 @@ export class StationVisuals {
   private readonly decals:MeshLambertMaterial[]=[];
   private readonly boxGeometries=new Map<string,BufferGeometry>();
   private readonly cube=new BoxGeometry(1,1,1);
-  private readonly cylinder=new CylinderGeometry(1,1,1,8);
+  private readonly cylinder=new CylinderGeometry(1,1,1,16);
   private readonly bevel=new CylinderGeometry(.9,1,1,4,1,false,Math.PI/4);
   constructor(private readonly group:Group,a:WorldAssets,doors:WorldDoor[]){
     this.geometries.add(this.cube);this.geometries.add(this.cylinder);this.geometries.add(this.bevel);
@@ -24,7 +24,9 @@ export class StationVisuals {
       if([0x35584b,0x263e39,0x47685f,0x617b71].includes(color))kind='glass';
       if([0xb4b9a2,0xa4ad95].includes(color))kind='ceramic';
       if([0x19241e,0x1f2923,0x161f1b].includes(color))kind='rubber';
-      if([0x586449,0x3f5148,0xa9b4a2,0x414c44,0x2b3d32].includes(color))kind='metal';
+      if([0x586449,0x3f5148,0xa9b4a2].includes(color))kind='metal';
+      if(color===0x414c44||color===0x2b3d32)kind='concrete';
+      if([0x92967e,0x202b23,0x454938].includes(color))kind='plastic';
       const material=this.materials.get(kind,color);
       if(o.material.transparent){const clone=material.clone();clone.transparent=true;clone.opacity=.55;o.material.dispose();o.material=clone;}else o.material=material;
       // Face-specific metric UVs: a 24m wall does not stretch a single tile.
@@ -32,12 +34,8 @@ export class StationVisuals {
       const repeats=[[s.z,s.y],[s.z,s.y],[s.x,s.z],[s.x,s.z],[s.x,s.y],[s.x,s.y]];
       for(let f=0;f<6;f++)for(let k=0;k<4;k++){const i=f*4+k;uv.setXY(i,uv.getX(i)*Math.max(.35,repeats[f][0]/2),uv.getY(i)*Math.max(.35,repeats[f][1]/2));}
       o.geometry=geometry;this.geometries.add(geometry);
-      // Sloped windshield and tapered cab replace the box-like parked vehicle roof.
-      if(o.position.y===1.5&&(o.position.x===17||o.position.x===-5)&&s.z===1.9){
-        const positions=geometry.getAttribute('position');for(let i=0;i<positions.count;i++)if(positions.getY(i)>0){positions.setX(i,positions.getX(i)*.82);positions.setZ(i,positions.getZ(i)*.62);}geometry.computeVertexNormals();
-      }
       if(color===0xb4b9a2&&o.position.y===.35){
-        const bowl=new LatheGeometry([[.22,0],[.25,.07],[.16,.22],[.2,.35],[.35,.48],[.39,.61],[.36,.66],[.28,.62],[.18,.43],[0,.4]].map(([x,y])=>new Vector2(x,y)),12);
+        const bowl=new LatheGeometry([[.22,0],[.25,.07],[.16,.22],[.2,.35],[.35,.48],[.39,.61],[.36,.66],[.28,.62],[.18,.43],[0,.4]].map(([x,y])=>new Vector2(x,y)),20);
         this.geometries.add(bowl);o.geometry=bowl;o.position.y=.06;o.scale.set(1,1,1.2);
       }else if(color===0xb4b9a2){o.position.y=1.02;o.scale.set(.67,.6,.25);}
       if(color===0xa4ad95){o.position.y=.47;o.scale.set(.27,.85,.27);}
@@ -119,10 +117,10 @@ export class StationVisuals {
     a.label(group,'CAFÉ PASSADO\nPÃO NA CHAPA',3,2,-10.17,1.4,'#d3b77b').rotation.y=Math.PI;
     a.label(group,'FIADO SÓ AMANHÃ',17,1,-11.43,1.8);
     // Sanitary fixtures, exposed drain, stock crate battens and workshop pegboard.
-    const seat=new TorusGeometry(.31,.048,4,12);this.geometries.add(seat);
+    const seat=new TorusGeometry(.31,.048,6,20);this.geometries.add(seat);
     const seatMesh=this.mesh(seat,0,.74,-24,1,1.25,1,'ceramic',0xc5c4af);seatMesh.rotation.x=-Math.PI/2;
     box(.23,1.15,-24.25,.09,.035,.06,'metal',0xa5aaa1);
-    const basin=new LatheGeometry([[.1,0],[.3,.04],[.43,.15],[.44,.24],[.36,.24],[.27,.1],[0,.07]].map(([x,y])=>new Vector2(x,y)),12);this.geometries.add(basin);
+    const basin=new LatheGeometry([[.1,0],[.3,.04],[.43,.15],[.44,.24],[.36,.24],[.27,.1],[0,.07]].map(([x,y])=>new Vector2(x,y)),20);this.geometries.add(basin);
     this.mesh(basin,2.5,.85,-24.8,1,1,.7,'ceramic',0xb9c0af);
     pipe([2.5,.9,-24.8],[2.5,.2,-24.8],.055);pipe([2.5,1.15,-25],[2.5,1.3,-25],.035);
     box(2.5,1.3,-24.9,.22,.04,.04);
@@ -169,8 +167,8 @@ export class StationVisuals {
   }
   private batch():void{
     // Merge remaining unique-sized static boxes by material, retaining metric UVs.
-    const remaining=new Map<MeshLambertMaterial,Mesh[]>();
-    for(const o of [...this.group.children])if(o instanceof Mesh&&!(o instanceof InstancedMesh)&&o.material instanceof MeshLambertMaterial&&!o.material.transparent){const list=remaining.get(o.material)??[];list.push(o);remaining.set(o.material,list);}
+    const remaining=new Map<Material,Mesh[]>();
+    for(const o of [...this.group.children])if(o instanceof Mesh&&!(o instanceof InstancedMesh)&&(o.material instanceof MeshLambertMaterial||o.material instanceof MeshStandardMaterial)&&!o.material.transparent){const list=remaining.get(o.material)??[];list.push(o);remaining.set(o.material,list);}
     for(const [material,list]of remaining)if(list.length>1){
       const transformed=list.map(o=>{o.updateMatrix();return o.geometry.clone().applyMatrix4(o.matrix);});
       const geometry=mergeGeometries(transformed);transformed.forEach(g=>g.dispose());

@@ -1,10 +1,11 @@
 export interface Preferences {
  quality:'Baixo'|'Médio'|'Alto';resolution:number;adaptive:boolean;distance:28|48|72;
+ grain:number;grading:number;chromatic:number;vignette:number;distortion:number;bloom:number;antialias:number;
  psx:boolean;dither:number;flicker:number;master:number;music:number;effects:number;
  mouseSensitivity:number;touchSensitivity:number;invertY:boolean;controlsSize:number;shake:number;reduceFlashes:boolean;typewriter:boolean;
 }
-const DEFAULTS:Preferences={quality:'Médio',resolution:.5,adaptive:true,distance:48,psx:true,dither:.35,flicker:.3,master:.8,music:.65,effects:.8,mouseSensitivity:1,touchSensitivity:1,invertY:false,controlsSize:1,shake:.6,reduceFlashes:false,typewriter:true};
-const RANGES:Partial<Record<keyof Preferences,[number,number]>>={resolution:[.25,1],dither:[0,1],flicker:[0,1],master:[0,1],music:[0,1],effects:[0,1],mouseSensitivity:[.2,3],touchSensitivity:[.2,3],controlsSize:[.8,1.3],shake:[0,1]};
+const DEFAULTS:Preferences={grain:.18,grading:.35,chromatic:.12,vignette:.2,distortion:0,bloom:.12,antialias:.65,quality:'Médio',resolution:.75,adaptive:true,distance:48,psx:true,dither:.12,flicker:.3,master:.8,music:.65,effects:.8,mouseSensitivity:1,touchSensitivity:1,invertY:false,controlsSize:1,shake:.6,reduceFlashes:false,typewriter:true};
+const RANGES:Partial<Record<keyof Preferences,[number,number]>>={grain:[0,1],grading:[0,1],chromatic:[0,1],vignette:[0,1],distortion:[0,1],bloom:[0,.5],antialias:[0,1],resolution:[.25,1],dither:[0,1],flicker:[0,1],master:[0,1],music:[0,1],effects:[0,1],mouseSensitivity:[.2,3],touchSensitivity:[.2,3],controlsSize:[.8,1.3],shake:[0,1]};
 export class SettingsStore {
  static readonly key='boitata-settings-v1';
  readonly value:Preferences={...DEFAULTS};hasSaved=false;warning='';
@@ -23,7 +24,7 @@ export class SettingsStore {
   }
  }
  set<K extends keyof Preferences>(key:K,value:Preferences[K]):void {this.apply({[key]:value});this.persist();this.listeners.forEach(l=>l());}
- quality(value:Preferences['quality']):void {this.value.quality=value;this.value.resolution={Baixo:.35,Médio:.5,Alto:.75}[value];this.persist();this.listeners.forEach(l=>l());}
+ quality(value:Preferences['quality']):void {this.value.quality=value;this.value.resolution={Baixo:.5,Médio:.75,Alto:1}[value];this.persist();this.listeners.forEach(l=>l());}
  migrate(values:Partial<Preferences>):void {if(this.hasSaved)return;this.apply(values as Record<string,unknown>);this.listeners.forEach(l=>l());}
  private persist():void {try{localStorage.setItem(SettingsStore.key,JSON.stringify({version:1,values:this.value}));this.hasSaved=true;this.warning='';}catch{this.warning='Não foi possível persistir as preferências.';}}
  subscribe(listener:()=>void):()=>void {this.listeners.add(listener);return()=>this.listeners.delete(listener);}

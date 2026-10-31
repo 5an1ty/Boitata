@@ -111,3 +111,7 @@ Aprovação visual do usuário precede a expansão da fatia. Esta etapa apenas e
 | N05 | Preservar planta em U, gameplay e liberdade de investigação | Contrato de regressão |
 | N06 | Modelos e áudio próprios/licenciados, metadados de autoria | Requisito para novos assets |
 | N07 | Metas 30/60 FPS com validação em hardware real | Objetivos, sem certificação atual |
+
+## Implementação da etapa 2
+
+A primeira base Neo-PSX está implementada; parâmetros, shaders, materiais e limitações estão em [docs/neo-psx/IMPLEMENTATION.md](docs/neo-psx/IMPLEMENTATION.md). N01 foi preservada; N03/N04 têm implementação inicial com ACES, acabamento configurável e materiais PBR seletivos. A aprovação visual e os testes em aparelhos reais permanecem necessários para as próximas iterações; os valores de direção acima não significam que cada asset já foi reconstruído.

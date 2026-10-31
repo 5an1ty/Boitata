@@ -1,3 +1,5 @@
+import {NeoPSXPipeline} from '../rendering/NeoPSXPipeline';
+import {PCFSoftShadowMap} from 'three';
 import {settings} from '../systems/SettingsStore';
 import {VisualPreferences} from '../systems/VisualPreferences';
 import {PerformanceMonitor} from '../systems/PerformanceMonitor';
@@ -22,6 +24,7 @@ export class Game {
   private readonly lastPosition=new Vector3();
   private readonly renderer = new WebGLRenderer({antialias:false,powerPreference:'high-performance'});
   private readonly world = new SceneManager();
+  private readonly pipeline:NeoPSXPipeline;
   private readonly input: InputManager;
   private readonly player: PlayerController;
   private readonly graphics: GraphicsSettings;
@@ -38,9 +41,12 @@ export class Game {
   private started=false;
   private paused=true;
   private messageTimer=0;
+  private renderElapsed=0;
   private readonly direction=new Vector3();
   constructor(private readonly root: HTMLElement) {
     this.renderer.domElement.className='game-canvas';root.append(this.renderer.domElement);this.visuals=new VisualPreferences(root);this.performance=new PerformanceMonitor(root);root.classList.add('overlay-open');
+    this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=PCFSoftShadowMap;
+    this.pipeline=new NeoPSXPipeline(this.renderer,this.world.scene,this.world.camera);
     this.graphics=new GraphicsSettings(this.renderer);this.graphics.resize();
     this.input=new InputManager(this.renderer.domElement);
     this.player=new PlayerController(new CameraController(this.world.camera),this.world.collisions);
@@ -101,7 +107,8 @@ export class Game {
       root.classList.toggle('overlay-open',this.paused||this.chapter.ui.modal!==null);
       if(this.world.camera.far!==this.graphics.renderDistance){this.world.camera.far=this.graphics.renderDistance;this.world.camera.updateProjectionMatrix();}
       if(!this.paused)this.campaign.cutscene.update(Math.min(rawDt,.05),this.world.camera);
-      this.renderer.render(this.world.scene,this.world.camera);this.performance.sample(rawDt,this.renderer);
+      this.renderElapsed+=rawDt;
+      if(!this.paused||this.renderElapsed>=.1){this.pipeline.render(this.renderElapsed);this.performance.sample(this.renderElapsed,this.renderer);this.renderElapsed=0;}
     });
     this.updateLamp();this.loop.start();
     window.addEventListener('pagehide',event=>{if(event.persisted)this.pause();else this.dispose();},{signal:this.abort.signal});
@@ -112,7 +119,7 @@ export class Game {
     if(this.disposed)return;if(this.started)this.pause();this.disposed=true;this.abort.abort();this.loop.stop();clearTimeout(this.messageTimer);this.input.dispose();this.graphics.dispose();this.visuals.dispose();this.performance.dispose();
     const geometries=new Set<BufferGeometry>(),materials=new Set<Material>(),textures=new Set<Texture>();
     this.world.scene.traverse(object=>{if('geometry'in object&&object.geometry instanceof BufferGeometry)geometries.add(object.geometry);if('material'in object){const list=Array.isArray(object.material)?object.material:[object.material];for(const material of list)if(material instanceof Material){materials.add(material);for(const value of Object.values(material))if(value instanceof Texture)textures.add(value);}}});
-    this.creature.dispose();this.chapter.dispose();this.audio.dispose();this.world.environment.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());this.world.flashlight.dispose();this.renderer.dispose();this.renderer.forceContextLoss();this.world.scene.clear();
+    this.creature.dispose();this.chapter.dispose();this.audio.dispose();this.world.environment.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());this.world.flashlight.dispose();this.pipeline.dispose();this.renderer.dispose();this.renderer.forceContextLoss();this.world.scene.clear();
   }
   private isTouch(): boolean {return matchMedia('(pointer: coarse)').matches;}
   private lockPointer(): void {

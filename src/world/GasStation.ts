@@ -85,10 +85,11 @@ export class GasStation {
   private door(a:WorldAssets,x:number,z:number,name:string,glass=false,width=1.8,yaw=0):void{const door=new WorldDoor(this.group,a,a.collisions,x,z,name,glass,width,yaw);this.doors.push(door);this.interactions.push(door);}
   vehicle(a:WorldAssets,x:number,z:number,truck:boolean):void {
     const b=a.box.bind(a,this.group),length=truck?7:4;
-    b(x,.7,z,2.4,1,length,truck?0x64634a:0x75816d);b(x,1.5,z+length*.27,2.2,1.4,1.9,truck?0x786c4c:0x667a6d);
-    b(x,1.7,z+length*.27+1,1.85,.65,.04,0x263e39,false);
+    const hull=b(x,.7,z,2.4,1,length,truck?0x64634a:0x75816d);hull.geometry=a.vehicleHull;hull.material=a.surface('paint',truck?0x64634a:0x75816d);
+    const cab=b(x,1.5,z+length*.27,2.2,1.4,1.9,truck?0x786c4c:0x667a6d);cab.geometry=a.vehicleCab;cab.material=a.surface('paint',truck?0x786c4c:0x667a6d);
+    const windshield=b(x,1.7,z+length*.27+.73,1.85,.65,.04,0x263e39,false);windshield.rotation.x=-.25;windshield.material=a.surface('glass',0x263e39);
     if(truck)b(x,1.9,z-1.5,2.5,2.6,4,0x5d604d);
-    for(const dx of [-1.2,1.2])for(const dz of [-length*.32,length*.32])b(x+dx,.45,z+dz,.35,.85,.85,0x19241e);
+    for(const dx of [-1.2,1.2])for(const dz of [-length*.32,length*.32]){const wheel=b(x+dx,.45,z+dz,.35,.85,.85,0x19241e);wheel.geometry=a.wheel;wheel.scale.set(.425,.35,.425);wheel.rotation.z=Math.PI/2;wheel.material=a.surface('rubber',0x19241e);}
     for(const dx of [-.8,.8])b(x+dx,.85,z+length/2+.04,.4,.25,.06,0xc4b586,false);
   }
 }

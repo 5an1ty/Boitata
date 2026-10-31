@@ -1,10 +1,10 @@
-import {BoxGeometry,CatmullRomCurve3,Color,ConeGeometry,CylinderGeometry,Group,InstancedMesh,Mesh,MeshLambertMaterial,Object3D,PointLight,Vector3} from 'three';
+import {BoxGeometry,CatmullRomCurve3,Color,ConeGeometry,CylinderGeometry,Group,InstancedMesh,Mesh,MeshLambertMaterial,Object3D,PointLight,SphereGeometry,Vector3} from 'three';
 /** Connected low-poly links sample a centripetal spline through actual head history. */
 export class BoitataModel {
  readonly group=new Group();readonly head=new Group();
  readonly light=new PointLight(0xff8a24,0,15,2);
  readonly segmentCount=28;
- private readonly geometry=new CylinderGeometry(.55,.6,1,6,1);
+ private readonly geometry=new CylinderGeometry(.55,.6,1,12,1);
  private readonly scaleGeometry=new ConeGeometry(.2,.34,3);
  private readonly material=new MeshLambertMaterial({color:0x8b3218,emissive:0xd65316,emissiveIntensity:.6,flatShading:true});
  private readonly scalesMaterial=new MeshLambertMaterial({color:0xffc95e,emissive:0xff8a30,emissiveIntensity:.8,flatShading:true});
@@ -12,13 +12,13 @@ export class BoitataModel {
  private readonly scales=new InstancedMesh(this.scaleGeometry,this.scalesMaterial,this.segmentCount);
  private readonly dummy=new Object3D();private readonly up=new Vector3(0,1,0);
  private history:Vector3[]=[];private clock=0;
- private readonly headGeometry=new ConeGeometry(.76,1.65,5);
+ private readonly headGeometry=new SphereGeometry(.76,12,8);
  private readonly eyeGeometry=new BoxGeometry(.23,.17,.23);
  private readonly jawGeometry=new BoxGeometry(1.15,.23,1.15);
  private readonly headMaterial=new MeshLambertMaterial({color:0x6d2211,emissive:0xb63a0f,emissiveIntensity:.5,flatShading:true});
  private readonly eyeMaterial=new MeshLambertMaterial({color:0xffeab6,emissive:0xffd77b,emissiveIntensity:3});
  constructor(){
-  const skull=new Mesh(this.headGeometry,this.headMaterial);skull.rotation.x=Math.PI/2;skull.position.z=.3;skull.scale.z=.7;this.head.add(skull);const jaw=new Mesh(this.jawGeometry,this.headMaterial);jaw.position.set(0,-.22,.16);this.head.add(jaw);
+  const skull=new Mesh(this.headGeometry,this.headMaterial);skull.position.z=.3;skull.scale.set(.85,.65,1.35);this.head.add(skull);const jaw=new Mesh(this.jawGeometry,this.headMaterial);jaw.position.set(0,-.22,.16);this.head.add(jaw);
   for(const x of [-.43,.43]){const eye=new Mesh(this.eyeGeometry,this.eyeMaterial);eye.position.set(x,.22,.5);this.head.add(eye);}
   // A forked flame crest makes the silhouette distinct from a generic snake.
   for(const x of [-.26,.26]){const crest=new Mesh(this.scaleGeometry,this.scalesMaterial);crest.position.set(x,.5,-.15);crest.scale.set(1,2,1);this.head.add(crest);}

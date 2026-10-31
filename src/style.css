@@ -16,3 +16,6 @@ html,body{overscroll-behavior:none}#app.overlay-open{touch-action:pan-y}.game-ca
 @media(max-height:360px) and (pointer:coarse){.menu h1{font-size:44px}.menu h1 span{line-height:2}.menu .help{display:none}.menu .menu-foot{display:none}.settings-open h1{font-size:30px}.settings-scroll{max-height:calc(94dvh - 115px)}.subtitles{bottom:6px;padding:10px 16px}.subtitles p{margin:5px 0}.menu .coordinates{display:none}}
 /* Decorative pointer has no generated text in accessible button names. */
 .menu-panel button.primary:before{content:'';display:inline-block;width:0;height:0;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:6px solid currentColor;margin-right:14px}
+
+/* Neo-PSX finish lives in WebGL; never double-filter text or the scene with CSS. */
+#app:after{display:none}.psx-dither{display:none}.game-canvas{image-rendering:auto}

@@ -1,4 +1,5 @@
 import {settings} from '../systems/SettingsStore';
+import {MeshLambertMaterial} from 'three';
 import { Group, InstancedMesh, Material, MeshBasicMaterial, PointLight, Vector3, type Scene } from 'three';
 import type { CollisionSystem } from '../systems/CollisionSystem';
 import { WorldAssets } from './WorldAssets';
@@ -19,10 +20,12 @@ export class GameWorld {
   powerLevel=1;
   blackoutTime=-1;
   private time=0;
+  private readonly visualGeometries:import('three').BufferGeometry[]=[];
+  private readonly visualTextures:import('three').Texture[]=[];
   private readonly beacon=new PointLight(0x72996b,7,16,2);
   constructor(private readonly scene:Scene,collisions:CollisionSystem){
     this.assets=new WorldAssets(collisions);const a=this.assets,b=a.box.bind(a,this.group),label=a.label.bind(a,this.group);
-    const ground=b(0,-.12,0,120,.24,120,0x747d56,false);const material=a.material(0x747d56).clone();material.map=a.groundTexture();ground.material=material;
+    const ground=b(0,-.12,0,120,.24,120,0x747d56,false);const material=a.surface('soil',0x777564).clone();material.map=material.map!.clone();material.map.repeat.set(45,45);this.visualTextures.push(material.map);ground.material=material;
     b(-12,.015,0,7,.03,120,0x252f2b,false);for(const x of [-16.2,-7.8])b(x,.01,0,1.4,.02,120,0x66664d,false);
     for(let z=-56;z<58;z+=6){b(-12,.04,z,.12,.015,2.2,0xaca37a,false);for(const x of [-15.3,-8.7])b(x,.04,z,.1,.015,5.5,0x93967f,false);
       b(-12+Math.sin(z)*2,.05,z,.03,.01,1.8,0x111c16,false);}
@@ -41,6 +44,12 @@ export class GameWorld {
     const red=b(18,12.2,44,.22,.22,.22,0xcc583d,false);red.material=new MeshBasicMaterial({color:0xcc583d});
     this.beacon.position.set(18,2,42);this.group.add(this.beacon);
     for(let i=0;i<14;i++){const glow=b(10+Math.sin(i*3.8)*6,.6+(i%3)*.4,34+i*.8,.06,.06,.06,0x99af64,false);glow.material=new MeshBasicMaterial({color:i%4===0?0x90cad0:0x92b069});}
+    // Metric top-face UVs and shared physical surfaces, with unchanged collision boxes.
+    for(const mesh of this.group.children){if(!('material'in mesh)||!('geometry'in mesh)||mesh.geometry!==a.cube)continue;
+      const m=mesh as import('three').Mesh;if(!(m.material instanceof MeshLambertMaterial))continue;
+      const color=m.material.color.getHex();const kind=color===0x252f2b?'asphalt':[0x555740,0x655c3e,0x55583b].includes(color)?'mud':null;
+      if(kind){m.material=a.surface(kind,color);const geo=a.cube.clone(),uv=geo.getAttribute('uv');for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*Math.max(1,m.scale.x/3),uv.getY(i)*Math.max(1,m.scale.z/3));m.geometry=geo;this.visualGeometries.push(geo);}
+    }
     a.batch(this.group);a.batch(this.station.group);scene.add(this.group);this.forest=new ForestSectors(scene,a);this.atmosphere=new Atmosphere(scene);
     this.interactions=[...this.station.interactions,{position:this.signPosition,label:'LER PLACA',use:()=> 'BR-319. Manaus, 147 km. Trecho fictício ao sul de Manaus.'},{position:new Vector3(20,1.3,44),label:'EXAMINAR RETRANSMISSORA',use:()=> 'Retransmissora de comunicação. Sem campanha ou transmissão disponível nesta etapa.'}];
     this.forest.update(new Vector3(0,1.65,13),48);
@@ -56,6 +65,7 @@ export class GameWorld {
     if(this.blackoutTime>=0)this.blackoutTime+=dt;
     const flicker=settings.value.reduceFlashes?0:settings.value.flicker;
     this.station.lights[0].intensity=32+Math.sin(this.time*7)*1.5*flicker;
+    this.station.lights[2].intensity=18;
     this.station.lights[1].intensity=27+(Math.sin(this.time*2.7)>.96?-23:Math.sin(this.time*3)*1.5)*flicker;
     this.beacon.intensity=(5+Math.sin(this.time*.8)*2)*(1+this.creatureThreat*Math.sin(this.time*12)*.4*flicker);
     this.station.lights.forEach((light,i)=>{const blackout=this.blackoutTime<0?1:Math.max(0,1-Math.max(0,this.blackoutTime-i*1.4)/2);light.intensity*=this.powerLevel*blackout;});
@@ -64,6 +74,6 @@ export class GameWorld {
     this.forest.dispose();this.atmosphere.dispose();this.station.visuals.dispose();this.station.doors.forEach(d=>d.dispose());
     const materials=new Set<Material>();
     for(const group of [this.group,this.station.group])group.traverse(o=>{if(o instanceof InstancedMesh)o.dispose();if('material'in o&&o.material instanceof Material)materials.add(o.material);});materials.forEach(m=>m.dispose());
-    this.assets.dispose();this.scene.remove(this.group,this.station.group);this.station.lights.forEach(l=>l.dispose());this.beacon.dispose();
+    this.visualGeometries.forEach(g=>g.dispose());this.visualTextures.forEach(t=>t.dispose());this.assets.dispose();this.scene.remove(this.group,this.station.group);this.station.lights.forEach(l=>l.dispose());this.beacon.dispose();
   }
 }
